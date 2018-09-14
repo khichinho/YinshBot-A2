@@ -1,6 +1,14 @@
 #include<iostream>
 #include<vector>
+#include<string>
 using namespace std;
+
+class Move{
+public:
+    string move_type;
+    int hexagon;
+    int index;
+};
 
 class Board {
 
@@ -16,12 +24,15 @@ public:
 
     Board(int board_size) {
         vector<int> el;
-        el.push_back(0);
-        board_storage.push_back(el);
-        el.clear();
         for(int i = 0; i < board_size; i++){
-            for(int j = 0; j < 6; j++)
-                el.push_back(0);
+            el.push_back(0);
+        }
+        for(int i = 0; i <= board_size; i++){
+            el.push_back(0);
+            board_storage.push_back(el);            
+        }
+        for(int i = 0; i < board_size; i++){
+            el.pop_back();
             board_storage.push_back(el);
         }
     }
@@ -42,14 +53,18 @@ public:
 
     void setmarker2(int m2);
     
+    int getpositionValue(int abscissa, int ordinate);
+
+    void setpositionValue(int abscissa,int ordinate, int value);
+
     vector<int> map_hex_mysys(int hexagon, int index); 
 
     vector<int> map_mysys_hex(int abscissa, int ordinate);
 // player_index can get value 0 or 1, 0 means player1 and 1 means player2
 
-    void execute_move(string move, int player_index);
+    void execute_move(Move mv, int player_index);
 
-    bool check_valid(string move, int player_index);
+    bool check_valid(Move mv, int player_index);
 };
 
 int Board::getring1()
@@ -73,6 +88,23 @@ int Board::getmarker2()
 void Board::setmarker2(int m2)
     {marker2 = m2;}
 
+int Board::getpositionValue(int abscissa, int ordinate){
+    int boardsize = (board_storage.size() - 1)/2;
+    int horizontal = abscissa + boardsize;
+    if(abscissa >= 0)return board_storage[horizontal][boardsize - ordinate];
+    else{
+        return board_storage[horizontal][horizontal - ordinate];
+    } 
+}
+
+void Board::setpositionValue(int abscissa, int ordinate, int value){
+    int boardsize = (board_storage.size() - 1)/2;
+    int horizontal = abscissa + boardsize;
+    if(abscissa >= 0)board_storage[horizontal][boardsize - ordinate] = value;
+    else{
+        board_storage[horizontal][horizontal - ordinate] = value;
+    }
+}
 vector<int> Board::map_hex_mysys(int hexagon, int index){
     vector<int> my_coord;
     my_coord.push_back(0);
@@ -148,6 +180,9 @@ vector<int> Board::map_mysys_hex(int abscissa, int ordinate){
     return hex_coord;
 }
 
+void Board::execute_move(Move mv, int player_index){
+
+}
 
 int main(){
     Board myBoard = Board(5);
