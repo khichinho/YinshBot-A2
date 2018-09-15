@@ -40,17 +40,6 @@ class Move{
         }
 };
 
-vector<Move> get_move(string ply){
-    vector<string> ply_vector = split_string(ply, ' ');
-    vector<Move> my_move;
-
-    for(int i = 0; i < ply_vector.size()/3; i++){
-        Move m = Move(ply_vector[3*i], stoi(ply_vector[3*i + 1]), stoi(ply_vector[3*i +2]));
-        my_move.push_back(m);
-    }
-    return(my_move);
-}
-
 class Coordinate {
 public :
     int c1;
@@ -103,6 +92,8 @@ class Board{
         int get_position(int x, int y);
         void set_position(int x, int y, int value);
 
+        vector<Move> get_move(string ply);
+
         vector<int> map_hex_mysys(int hexagon, int index); 
         vector<int> map_mysys_hex(int abscissa, int ordinate);
 
@@ -113,12 +104,29 @@ class Board{
         string print_position(int x, int y);
 };
 
+
+vector<Move> Board::get_move(string ply){
+    vector<string> ply_vector = split_string(ply, ' ');
+    vector<Move> my_move;
+
+    for(int i = 0; i < ply_vector.size()/3; i++){
+        vector<int> hex_coordinates;
+        hex_coordinates.push_back(stoi(ply_vector[3*i + 1]));
+        hex_coordinates.push_back(stoi(ply_vector[3*i + 2]));
+        vector<int> mysys_coordinates = map_hex_mysys(hex_coordinates[0],hex_coordinates[1]);
+
+        Move m = Move(ply_vector[3*i], mysys_coordinates[0], mysys_coordinates[1]);
+        my_move.push_back(m);
+    }
+    return(my_move);
+}
+
 string Board::print_position(int x, int y){
     int value = get_position(x,y);
     if(value == -1){ return "a";}
     else if(value == -2){ return "A";}
-    else if(value == 1){ return "b";}
-    else if(value == 2){ return "B";}
+    else if(value == 1){ return "c";}
+    else if(value == 2){ return "C";}
     else if(value == 0){ return ".";}
 }
 
@@ -252,25 +260,21 @@ void Board::execute_move(vector<Move> movelist, int player_index){
                 if(m2.x > m1.x){
                     for(int i = m1.x+1; i < m2.x; i++)
                         set_position(i, m1.y, -1* get_position(i, m1.y));
-                    //set_position(m2.x, m2.y, 2*player_index);
                 }
                 else{
                     for(int i = m1.x-1; i > m2.x; i--)
                         set_position(i, m1.y, -1*get_position(i, m1.y));
-                    //set_position(m2.x, m2.y, 2*player_index);
-                }                
+                }
             }
 
             else if(m1.x == m2.x){
                 if(m2.y > m1.y){
                     for(int i = m1.y+1; i < m2.y; i++)
                         set_position(m1.x, i, -1*get_position(m1.x, i));
-                    //set_position(m2.x, m2.y, 2*player_index);
                 }
                 else{
                     for(int i = m1.y-1; i > m2.y; i--)
                         set_position(m1.x, i, -1*get_position(m1.x, i));
-                    //set_position(m2.x, m2.y, 2*player_index);
                 }
             }
 
@@ -278,12 +282,10 @@ void Board::execute_move(vector<Move> movelist, int player_index){
                 if(m2.x > m1.x){
                     for(int i = 1; i < m2.x-m1.x; i++)
                         set_position(m1.x+i, m1.y+i, -1*get_position(m1.x+i, m1.y+i));
-                    //set_position(m2.x, m2.y, 2*player_index);                        
                 }
                 else{
                     for(int i = 1; i < m1.x-m2.x; i++)
                         set_position(m1.x-i, m1.y-i, -1*get_position(m1.x-i,m1.y-i));
-                    //set_position(m2.x, m2.y, 2*player_index);
                 }
             }
 
@@ -299,12 +301,10 @@ void Board::execute_move(vector<Move> movelist, int player_index){
                 if(m2.x > m1.x){
                     for(int i = 0; i < markers_removed; i++)
                         set_position(m1.x+i, m1.y, 0);
-                    //set_position(m2.x, m2.y, 0);
                 }
                 else{
                     for(int i = 0; i < markers_removed; i++)
                         set_position(m1.x-i, m1.y, 0);
-                    //set_position(m2.x, m2.y, 0);
                 }                
             }
             else if(m1.x == m2.x){
@@ -362,7 +362,7 @@ void Board::print_board(){
 
     cout << '\n' << '\n';
     cout << "ring1: " << ring1 << '\n' << "ring2: " << ring2 << '\n';
-    cout << "marker1: " << marker1 << '\n' << "marker2: " << marker2 << '\n';
+    cout << "marker1: " << marker1 << '\n' << "marker2: " << marker2 << '\n' << '\n';
 }
 
 
@@ -371,47 +371,30 @@ int main(){
     string line;
     Board my_board = Board(5,5,3);
     int player_number = -1;
+    my_board.print_board();
     
-    // while (getline(infile, line))
-    // {
-    //     vector<Move> movvllist = get_move(line);
-    //         // for(int i = 0; i < movvllist.size(); i++){
-    //         //     Move mv = movvllist[i];
-    //         //     cout << 
-    //         // }
-    //         //cout << movvlist.size();
-    //         my_board.execute_move(movvllist, player_number);
-    //         //int x = myBoard.getpositionValue(1,0);
-            
-    //         //cout << movvlist.size();
-            
-    //         my_board.print_board();
-    //         player_number *= -1;
-    //     // process pair (a,b)
-    // }
+    while (getline(infile, line))
+    {
+        if(player_number == -1){ cout<<"Player 1 moves : ";}
+        else{cout<<"Player 2 moves : ";}
+        vector<Move> movvllist = my_board.get_move(line);
+        my_board.execute_move(movvllist, player_number);
+        my_board.print_board();
+        player_number *= -1;
+    }
 
-    for(int i = 0; i < 100; i++){
-         string s;
-         getline(cin, s);
+    // for(int i = 0; i < 100; i++){
+    //      if(player_number == -1){ cout<<"Player 1 moves : ";}
+    //      else{cout<<"Player 2 moves : ";}
+    //      string s;
+    //      getline(cin, s);
     
-         vector<Move> movvllist = get_move(s);
+    //      vector<Move> move_list = my_board.get_move(s);
     
-    
-         my_board.execute_move(movvllist, player_number);
-         my_board.print_board();
-         player_number *= -1;
-     }
-
-    // vector<int> pos = my_board.map_hex_mysys(4,13);
-    // cout<<pos[0]<<pos[1];
-
-    // vector<string> ply_split = split_string("P 4 12",' ');
-    
-    // vector<Move> moves = get_move("P 4 12 K 3 5 RS 3 1");
-
-    // for(int i = 0; i< moves.size(); i++){
-    //     cout<<moves[i].move_type<<endl<<moves[i].x<<endl<<moves[i].y<<endl;
-    // }
+    //      my_board.execute_move(move_list, player_number);
+    //      my_board.print_board();
+    //      player_number *= -1;
+    //  }
 
     return(1);
 }
