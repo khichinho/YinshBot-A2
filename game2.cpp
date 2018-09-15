@@ -286,9 +286,6 @@ void Board::execute_move(vector<Move> movelist, int player_index){
 }
 
 
-
-
-
 vector<string> split_string(string str, char dl)
 {
     string word = "";

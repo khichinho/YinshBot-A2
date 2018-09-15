@@ -1,7 +1,31 @@
 #include<iostream>
 #include<vector>
 #include<string>
+#include <sstream>
+#include <fstream>
+#include <algorithm>
+
 using namespace std;
+
+vector<string> split_string(string str, char dl)
+{
+    string word = "";
+    int num = 0;
+    str = str + dl;
+    int l = str.size();
+    vector<string> substr_list;
+    
+    for (int i = 0; i < l; i++) {
+        if (str[i] != dl)
+            word = word + str[i];
+        else {
+            if ((int)word.size() != 0)
+                substr_list.push_back(word);
+            word = "";
+        }
+    }
+    return substr_list;
+}
 
 class Move{
     public:
@@ -14,6 +38,27 @@ class Move{
             x = xcor;
             y = ycor;
         }
+};
+
+vector<Move> get_move(string ply){
+    vector<string> ply_vector = split_string(ply, ' ');
+    vector<Move> my_move;
+
+    for(int i = 0; i < ply_vector.size()/3; i++){
+        Move m = Move(ply_vector[3*i], stoi(ply_vector[3*i + 1]), stoi(ply_vector[3*i +2]));
+        my_move.push_back(m);
+    }
+    return(my_move);
+}
+
+class Coordinate {
+public :
+    int c1;
+    int c2;    
+    Coordinate(int coordinate1, int coordinate2){
+        c1 = c1;
+        c2 = c2;
+    }
 };
 
 class Board{
@@ -29,18 +74,21 @@ class Board{
         int ring1_removed;  // rings removed of player1 till now
         int ring2_removed;  // rings removed of player2 till now
 
+        vector<Coordinate> player1_rings;
+        vector<Coordinate> player2_rings;
+    
+
     public:
         vector<vector<int> > board_storage;
 
         Board(int board_size, int m, int r){
             vector<int> element;
-            for(int i = -5; i <= 5; i++){
-                for(int j = -5; j<= 5; j++){
-                    element.push_back(0);
-                }
+            for(int i = -board_size; i <= board_size; i++)
+                element.push_back(0);
+            for(int i = -board_size; i <= board_size; i++)
                 board_storage.push_back(element);
-                element.clear();
-            }
+            
+            element.clear();
 
             rings_removed = r;
             markers_removed = m;
@@ -56,28 +104,26 @@ class Board{
         void set_position(int x, int y, int value);
 
         vector<int> map_hex_mysys(int hexagon, int index); 
-
         vector<int> map_mysys_hex(int abscissa, int ordinate);
 
         bool check_valid(Move mv, int player_index);
-
         void execute_move(vector<Move>, int player_index);
 
         void print_board();
-        int print_position(int x, int y);
+        string print_position(int x, int y);
 };
+
+string Board::print_position(int x, int y){
+    int value = get_position(x,y);
+    if(value == -1){ return "a";}
+    else if(value == -2){ return "A";}
+    else if(value == 1){ return "b";}
+    else if(value == 2){ return "B";}
+    else if(value == 0){ return ".";}
+}
 
 int Board::get_position(int x, int y){
     return board_storage[x+5][y+5];
-}
-
-int Board::print_position(int x, int y){
-    int value = get_position(x,y);
-    if(value == -1){ return 1;}
-    else if(value == -2){ return 4;}
-    else if(value == 1){ return 1;}
-    else if(value == 2){ return 3;}
-    else if(value == 0){ return 0;}
 }
 
 void Board::set_position(int x, int y, int value){
@@ -87,9 +133,7 @@ void Board::set_position(int x, int y, int value){
     board_storage[x+5][y+5] = value;
 
 ////////////////////////////// picked up from aniket
-    if(init_value == 0 && value == 2)ring2++;
-    else if(init_value == 0 && value == -2)ring1++;
-    else if(init_value == 2 && value == 1)marker2++;
+    if(init_value == 2 && value == 1)marker2++;
     else if(init_value == -2 && value == -1)marker1++;
     else if(init_value == -1 && value == 1){
         marker1--;
@@ -185,58 +229,65 @@ vector<int> Board::map_mysys_hex(int abscissa, int ordinate){
 void Board::execute_move(vector<Move> movelist, int player_index){
     for(int k = 0; k < movelist.size(); k++){
         Move m1 = movelist[k];
+        Coordinate ringcoordinate(m1.x, m1.y);
         if(m1.move_type == "P"){
             set_position(m1.x, m1.y, 2*player_index);
-            if(player_index == -1){ ring1++; }
-            else{ ring2++; }
-        }
-        
-        else if(m1.move_type == "S"){
-            Move m2 = movelist[++k];
-            if(m2.move_type != "M")throw "invalid move";
-            else {
-                set_position(m1.x, m1.y, player_index);
-                set_position(m2.x, m2.y, 2*player_index);
-                if(m1.y == m2.y){
-                    if(m2.x > m1.x){
-                        for(int i = m1.x+1; i < m2.x; i++)
-                            set_position(i, m1.y, -1* get_position(i, m1.y));
-                        set_position(m2.x, m2.y, 2*player_index);
-                    }
-                    else{
-                        for(int i = m1.x+1; i > m2.x; i--)
-                            set_position(i, m1.y, -1*get_position(i, m1.y));
-                        //set_position(m2.x, m2.y, 2*player_index);
-                    }                
-                }
-
-                else if(m1.x == m2.x){
-                    if(m2.y > m1.y){
-                        for(int i = m1.y+1; i < m2.y; i++)
-                            set_position(m1.x, i, -1*get_position(m1.x, i));
-                        //set_position(m2.x, m2.y, 2*player_index);
-                    }
-                    else{
-                        for(int i = m1.y+1; i > m2.y; i--)
-                            set_position(m1.x, i, -1*get_position(m1.x, i));
-                        //set_position(m2.x, m2.y, 2*player_index);
-                    }
-                }
-
-                else if(m2.y-m1.y == m2.x-m1.x){
-                    if(m2.x > m1.x){
-                        for(int i = 1; i < m2.x-m1.x; i++)
-                            set_position(m1.x+i, m1.y+i, -1*get_position(m1.x+i, m1.y+i));
-                        set_position(m2.x, m2.y, 2*player_index);                        
-                    }
-                    else{
-                        for(int i = 1; i < m1.x-m2.x; i--)
-                            set_position(m1.x-i, m2.y-i, -1*get_position(m1.x-i,m1.y-i));
-                        set_position(m2.x, m2.y, 2*player_index);
-                    }
-                }
-
+            if(player_index == -1){
+                ring1++;
+                player1_rings.push_back(ringcoordinate);
             }
+            else {
+                ring2++;
+                player2_rings.push_back(ringcoordinate);
+            }
+        }
+        else if(m1.move_type == "S"){  
+            k = k+1;
+            Move m2 = movelist[k];
+            //if(m2.move_type != "M")throw "invalid move";
+            //else {
+            set_position(m1.x, m1.y, player_index);
+            set_position(m2.x, m2.y, 2*player_index);
+            if(m1.y == m2.y){
+                if(m2.x > m1.x){
+                    for(int i = m1.x+1; i < m2.x; i++)
+                        set_position(i, m1.y, -1* get_position(i, m1.y));
+                    //set_position(m2.x, m2.y, 2*player_index);
+                }
+                else{
+                    for(int i = m1.x-1; i > m2.x; i--)
+                        set_position(i, m1.y, -1*get_position(i, m1.y));
+                    //set_position(m2.x, m2.y, 2*player_index);
+                }                
+            }
+
+            else if(m1.x == m2.x){
+                if(m2.y > m1.y){
+                    for(int i = m1.y+1; i < m2.y; i++)
+                        set_position(m1.x, i, -1*get_position(m1.x, i));
+                    //set_position(m2.x, m2.y, 2*player_index);
+                }
+                else{
+                    for(int i = m1.y-1; i > m2.y; i--)
+                        set_position(m1.x, i, -1*get_position(m1.x, i));
+                    //set_position(m2.x, m2.y, 2*player_index);
+                }
+            }
+
+            else if(m2.y-m1.y == m2.x-m1.x){
+                if(m2.x > m1.x){
+                    for(int i = 1; i < m2.x-m1.x; i++)
+                        set_position(m1.x+i, m1.y+i, -1*get_position(m1.x+i, m1.y+i));
+                    //set_position(m2.x, m2.y, 2*player_index);                        
+                }
+                else{
+                    for(int i = 1; i < m1.x-m2.x; i++)
+                        set_position(m1.x-i, m1.y-i, -1*get_position(m1.x-i,m1.y-i));
+                    //set_position(m2.x, m2.y, 2*player_index);
+                }
+            }
+
+            //}
         }
 
         else if(m1.move_type =="RS"){
@@ -285,41 +336,6 @@ void Board::execute_move(vector<Move> movelist, int player_index){
     }
 }
 
-
-
-
-
-vector<string> split_string(string str, char dl)
-{
-    string word = "";
-    int num = 0;
-    str = str + dl;
-    int l = str.size();
-    vector<string> substr_list;
-    
-    for (int i = 0; i < l; i++) {
-        if (str[i] != dl)
-            word = word + str[i];
-        else {
-            if ((int)word.size() != 0)
-                substr_list.push_back(word);
-            word = "";
-        }
-    }
-    return substr_list;
-}
-
-vector<Move> get_move(string ply){
-    vector<string> ply_vector = split_string(ply, ' ');
-    vector<Move> my_move;
-
-    for(int i = 0; i < ply_vector.size()/3; i++){
-        Move m = Move(ply_vector[3*i], stoi(ply_vector[3*i + 1]), stoi(ply_vector[3*i +2]));
-        my_move.push_back(m);
-    }
-    return(my_move);
-}
-
 void Board::print_board(){
 
     cout << "   " << "     " << " " << "     " << " " << " " << endl;
@@ -351,30 +367,42 @@ void Board::print_board(){
 
 
 int main(){
+    ifstream infile("thefile.txt");
+    string line;
     Board my_board = Board(5,5,3);
-    my_board.print_board();
-    
     int player_number = -1;
-    for(int i = 0; i < 100; i++){
-        string s;
-        getline(cin, s);
-        //vector<string> movvlist = splitstr(s);
-        vector<Move> movvllist = get_move(s);
-        //cout << movvlist.size();
-        my_board.execute_move(movvllist, player_number);
-        //int x = myBoard.getpositionValue(1,0);
-        cout << 1 ;
-        //cout << movvlist.size();
-        
-        my_board.print_board();
-        player_number *= -1;
-    }
+    // while (getline(infile, line))
+    // {
+    //     vector<Move> movvllist = get_move(line);
+    //         // for(int i = 0; i < movvllist.size(); i++){
+    //         //     Move mv = movvllist[i];
+    //         //     cout << 
+    //         // }
+    //         //cout << movvlist.size();
+    //         my_board.execute_move(movvllist, player_number);
+    //         //int x = myBoard.getpositionValue(1,0);
+            
+    //         //cout << movvlist.size();
+            
+    //         my_board.print_board();
+    //         player_number *= -1;
+    //     // process pair (a,b)
+    // }
 
-    int a = 3;
-    int b = 5;
-    cout<<a<<a++<<a;
-    cout<<b<<++b<<b;
+    // for(int i = 0; i < 100; i++){
+    //      string s;
+    //      getline(cin, s);
+    
+    //      vector<Move> movvllist = get_move(s);
+    
+    
+    //      my_board.execute_move(movvllist, player_number);
+    //      my_board.print_board();
+    //      player_number *= -1;
+    //  }
 
-    cout<<endl;
+    vector<int> pos = my_board.map_hex_mysys(4,13);
+    cout<<pos[0]<<pos[1];
+
     return(1);
 }
