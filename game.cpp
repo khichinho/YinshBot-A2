@@ -52,11 +52,15 @@ private:
     int ring2;
     int marker1;
     int marker2;
+    int markers_removed;    // number of markers, can be removed in one step
+    int rings_removed;  // total rings to be removed
+    int ring1_removed;  // rings removed of player1 till now
+    int ring2_removed;  // rings removed of player2 till now
 public:
 
     vector<vector<int> > board_storage;
 
-    Board(int board_size) {
+    Board(int board_size, int m, int r) {
         vector<int> el;
         for(int i = 0; i < board_size; i++){
             el.push_back(0);
@@ -69,6 +73,14 @@ public:
             el.pop_back();
             board_storage.push_back(el);
         }
+        rings_removed = r;
+        markers_removed = m;
+        ring1 = 0;
+        ring2 = 0;
+        marker1 = 0;
+        marker2 = 0;
+        ring1_removed = 0;
+        ring2_removed = 0;
     }
 
     int getring1();
@@ -101,6 +113,8 @@ public:
     void execute_move(vector<Move> movelist, int player_index);
 
     bool check_valid(Move mv, int player_index);
+
+    void print_board();
 };
 
 int Board::getring1()
@@ -134,12 +148,30 @@ int Board::getpositionValue(int abscissa, int ordinate){
 }
 
 void Board::setpositionValue(int abscissa, int ordinate, int value){
+    int init_value = getpositionValue(abscissa, ordinate);    
     int boardsize = (board_storage.size() - 1)/2;
     int horizontal = abscissa + boardsize;
     if(abscissa >= 0)board_storage[horizontal][boardsize - ordinate] = value;
     else{
         board_storage[horizontal][horizontal - ordinate] = value;
     }
+    
+    if(init_value == 0 && value == 2)ring2++;
+    else if(init_value == 0 && value == -2)ring1++;
+    else if(init_value == 2 && value == 1)marker2++;
+    else if(init_value == -2 && value == -1)marker1++;
+    else if(init_value == -1 && value == 1){
+        marker1--;
+        marker2++;
+    }
+    else if(init_value == 1 && value == -1){
+        marker1++;
+        marker2--;
+    }
+    else if(init_value == 1 && value == 0)marker2--;
+    else if(init_value == -1 && value == 0)marker1--;
+    else if(init_value == 2 && value == 0)ring2--;
+    else if(init_value == -2 && value == 0)ring1--;
 }
 vector<int> Board::map_hex_mysys(int hexagon, int index){
     vector<int> my_coord;
@@ -220,15 +252,16 @@ vector<Move> Board::totalmoves(string move){
 }
 
 void Board::execute_move(vector<Move> movelist, int player_index){
-    for(int i = 0; i < movelist.size(); i++){
-        Move m1 = movelist[i];
+    for(int k = 0; k < movelist.size(); k++){
+        Move m1 = movelist[k];
         vector<int> mycoord = map_hex_mysys(m1.hexagon, m1.index);
         if(m1.move_type == "P"){
             setpositionValue(mycoord[0], mycoord[1], 2*player_index);
+            // if(player_index == -1)ring1++;
+            //     else ring2++;
         }
-        else if(m1.move_type == "S"){
-            i++;
-            Move m2 = movelist[i];
+        else if(m1.move_type == "S"){            
+            Move m2 = movelist[++k];
             vector<int> mycoord2 = map_hex_mysys(m2.hexagon, m2.index);
             if(m2.move_type != "M")throw "invalid move";
             else {
@@ -275,22 +308,101 @@ void Board::execute_move(vector<Move> movelist, int player_index){
 
             }
         }
+
+        else if(m1.move_type =="RS"){
+            Move m2 = movelist[++k];
+            vector<int> mycoord2 = map_hex_mysys(m2.hexagon, m2.index);
+            Move m3 = movelist[++k];
+            if(player_index == -1)ring1_removed++;
+                else ring2_removed++;
+            if(mycoord[1] == mycoord2[1]){
+                if(mycoord2[0] > mycoord[0]){
+                    for(int i = 0; i < markers_removed; i++)
+                        setpositionValue(mycoord[0]+i, mycoord[1], 0);
+                    //setpositionValue(mycoord2[0], mycoord2[1], 0);
+                }
+                else{
+                    for(int i = 0; i < markers_removed; i++)
+                        setpositionValue(mycoord[0]-i, mycoord[1], 0);
+                    //setpositionValue(mycoord2[0], mycoord2[1], 0);
+                }                
+            }
+            else if(mycoord[0] == mycoord2[0]){
+                if(mycoord2[1] > mycoord[1]){
+                    for(int i = 0; i < markers_removed; i++)
+                        setpositionValue(mycoord[0], mycoord[1]+i, 0);    
+                }
+                else{
+                    for(int i = 0; i < markers_removed; i++){
+                         setpositionValue(mycoord[0], mycoord[1]-i, 0);
+                    }
+                }
+            }
+            else if(mycoord2[1]-mycoord[1] == mycoord2[0]-mycoord[0]){
+                if(mycoord2[0] > mycoord[0]){
+                    for(int i = 0; i < markers_removed; i++)
+                        setpositionValue(mycoord[0]+i, mycoord[1]+i, 0);
+                }
+                else{
+                    for(int i = 0; i < markers_removed; i++)
+                        setpositionValue(mycoord[0]-i,mycoord[1]-i, 0);
+                }
+            }
+
+            vector<int> mycoord3 = map_hex_mysys(m3.hexagon, m3.index);
+            setpositionValue(mycoord3[0], mycoord3[1], 0);
+
+        }
         
     }
 }
 
+void Board::print_board(){
+
+    cout << "   " << "     " << " " << "     " << " " << " " << endl;
+    cout << " " << "     " << " " << "     " << getpositionValue(-1,4) << "     " << getpositionValue(1,5) << endl;
+    cout << "   " << "     " << " " << getpositionValue(-2,3) << "     " << getpositionValue(0,4) << "     " << getpositionValue(2,5) << endl;
+    cout << " " << "     " << getpositionValue(-3,2) << "     " << getpositionValue(-1,3) << "     " << getpositionValue(1,4) << "     " << getpositionValue(3,5) << endl;
+    cout << "   " << getpositionValue(-4,1) << "     " << getpositionValue(-2,2) << "     " << getpositionValue(0,3) << "     " << getpositionValue(2,4) << "     " << getpositionValue(4,5) << endl;
+    cout << " " << "     " << getpositionValue(-3,1) << "     " << getpositionValue(-1,2) << "     " << getpositionValue(1,3) << "     " << getpositionValue(3,4) << "     " << " " << endl;
+    cout << "   " << getpositionValue(-4,0) << "     " << getpositionValue(-2,1) << "     " << getpositionValue(0,2) << "     " << getpositionValue(2,3) << "     " << getpositionValue(4,4) << endl;
+    cout << getpositionValue(-5,-1) << "     " << getpositionValue(-3,0) << "     " << getpositionValue(-1,1) << "     " << getpositionValue(1,2) << "     " << getpositionValue(3,3) << "     " << getpositionValue(5,4) << endl;
+    cout << "   " << getpositionValue(-4,-1) << "     " << getpositionValue(-2,0) << "     " << getpositionValue(0,1) << "     " << getpositionValue(2,2) << "     " << getpositionValue(4,3) << endl;
+    cout << getpositionValue(-5,-2) << "     " << getpositionValue(-3,-1) << "     " << getpositionValue(-1,0) << "     " << getpositionValue(1,1) << "     " << getpositionValue(3,2) << "     " << getpositionValue(5,3) << endl;
+    cout << "   " << getpositionValue(-4,-2) << "     " << getpositionValue(-2,-1) << "     " << getpositionValue(0,0) << "     " << getpositionValue(2,1) << "     " << getpositionValue(4,2) << endl;
+    cout << getpositionValue(-5,-3) << "     " << getpositionValue(-3,-2) << "     " << getpositionValue(-1,-1) << "     " << getpositionValue(1,0) << "     " << getpositionValue(3,1) << "     " << getpositionValue(5,2) << endl;
+    cout << "   " << getpositionValue(-4,-3) << "     " << getpositionValue(-2,-2) << "     " << getpositionValue(0,-1) << "     " << getpositionValue(2,0) << "     " << getpositionValue(4,1) << endl;
+    cout << getpositionValue(-5,-4) << "     " << getpositionValue(-3,-3) << "     " << getpositionValue(-1,-2) << "     " << getpositionValue(1,-1) << "     " << getpositionValue(3,0) << "     " << getpositionValue(5,1) << endl;
+    cout << "   " << getpositionValue(-4,-4) << "     " << getpositionValue(-2,-3) << "     " << getpositionValue(0,-2) << "     " << getpositionValue(2,-1) << "     " << getpositionValue(4,0) << endl;
+    cout << " " << "     " << getpositionValue(-3,-4) << "     " << getpositionValue(-1,-3) << "     " << getpositionValue(1,-2) << "     " << getpositionValue(3,-1) << "     " << " " << endl;
+    cout << "   " << getpositionValue(-4,-5) << "     " << getpositionValue(-2,-4) << "     " << getpositionValue(0,-3) << "     " << getpositionValue(2,-2) << "     " << getpositionValue(4,-1) << endl;
+    cout << " " << "     " << getpositionValue(-3,-5) << "     " << getpositionValue(-1,-4) << "     " << getpositionValue(1,-3) << "     " << getpositionValue(3,-2) << endl;
+    cout << "   " << " " << "     " << getpositionValue(-2,-5) << "     " << getpositionValue(0,-4) <<  "     " << getpositionValue(2,-3) <<endl;
+    cout << " " << "     " << " " << "     " << getpositionValue(-1,-5) << "     " << getpositionValue(1,-4) << endl;
+    cout << "   " << "     " << " " << "     " << " " << " " << endl;
+
+    cout << '\n' << '\n';
+    cout << "ring1: " << ring1 << '\n' << "ring2: " << ring2 << '\n';
+    cout << "marker1: " << marker1 << '\n' << "marker2: " << marker2 << '\n';
+}
+
+
 int main(){
-    Board myBoard = Board(5);
-    for(int i = 0; i < 5; i++){
-        for(int j = 0; j < 6*i; j++){
-            vector<int> conv = myBoard.map_hex_mysys(i,j);
-            vector<int> revconv = myBoard.map_mysys_hex(conv[0], conv[1]);
-
-            if(i != revconv[0] || j != revconv[1]){
-                cout << i << " " << j << ": " << conv[0] << " " << conv[1] << ": " << revconv[0] << " " << revconv[1] << endl;
-
-            }
-        }
+    Board myBoard = Board(5,5,3);
+    int player_number = -1;
+    for(int i = 0; i < 100; i++){
+        string s;
+        getline(cin, s);
+        vector<string> movvlist = splitstr(s);
+        //myBoard.execute_move(movvlist, player_number);
+        //int x = myBoard.getpositionValue(1,0);
+        cout << 1 ;
+        cout << movvlist.size();
+        for(int i = 0; i < movvlist.size(); i++)
+            cout << movvlist[i];
+        cout << stoi(movvlist[2]);
+        //myBoard.print_board();
+        player_number *= -1;
     }
     return 1;
 }
