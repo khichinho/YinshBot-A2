@@ -36,7 +36,7 @@ public:
 vector<Move> movlist(string ply){
     vector<Move> ret;
     vector<string> movstr = splitstr(ply);
-    for(int i = 0; i < movstr.size()/3; i++){
+    for(int i = 0; i < movstr.size(); i = i+3){
         Move m1(movstr[i], stoi(movstr[i+1]), stoi(movstr[i+2]));
         ret.push_back(m1);
     }
@@ -393,15 +393,15 @@ int main(){
     for(int i = 0; i < 100; i++){
         string s;
         getline(cin, s);
-        vector<string> movvlist = splitstr(s);
-        //myBoard.execute_move(movvlist, player_number);
+        //vector<string> movvlist = splitstr(s);
+        vector<Move> movvllist = movlist(s);
+        //cout << movvlist.size();
+        myBoard.execute_move(movvllist, player_number);
         //int x = myBoard.getpositionValue(1,0);
         cout << 1 ;
-        cout << movvlist.size();
-        for(int i = 0; i < movvlist.size(); i++)
-            cout << movvlist[i];
-        cout << stoi(movvlist[2]);
-        //myBoard.print_board();
+        //cout << movvlist.size();
+        
+        myBoard.print_board();
         player_number *= -1;
     }
     return 1;
