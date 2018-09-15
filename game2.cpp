@@ -40,15 +40,6 @@ class Move{
         }
 };
 
-class Coordinate {
-public :
-    int c1;
-    int c2;    
-    Coordinate(int coordinate1, int coordinate2){
-        c1 = c1;
-        c2 = c2;
-    }
-};
 
 class Board{
 
@@ -63,11 +54,14 @@ class Board{
         int ring1_removed;  // rings removed of player1 till now
         int ring2_removed;  // rings removed of player2 till now
 
-        vector<Coordinate> player1_rings;
-        vector<Coordinate> player2_rings;
+        
     
 
     public:
+
+        vector<vector<int> > player1_rings;
+        vector<vector<int> > player2_rings;
+
         vector<vector<int> > board_storage;
 
         Board(int board_size, int m, int r){
@@ -237,7 +231,9 @@ vector<int> Board::map_mysys_hex(int abscissa, int ordinate){
 void Board::execute_move(vector<Move> movelist, int player_index){
     for(int k = 0; k < movelist.size(); k++){
         Move m1 = movelist[k];
-        Coordinate ringcoordinate(m1.x, m1.y);
+        vector<int> ringcoordinate;
+        ringcoordinate.push_back(m1.x);
+        ringcoordinate.push_back(m1.y);
         if(m1.move_type == "P"){
             set_position(m1.x, m1.y, 2*player_index);
             if(player_index == -1){
@@ -254,6 +250,9 @@ void Board::execute_move(vector<Move> movelist, int player_index){
             Move m2 = movelist[k];
             //if(m2.move_type != "M")throw "invalid move";
             //else {
+            vector<int> ring2Coordinate;
+            ring2Coordinate.push_back(m2.x);
+            ring2Coordinate.push_back(m2.y);
             set_position(m1.x, m1.y, player_index);
             set_position(m2.x, m2.y, 2*player_index);
             if(m1.y == m2.y){
@@ -288,6 +287,17 @@ void Board::execute_move(vector<Move> movelist, int player_index){
                         set_position(m1.x-i, m1.y-i, -1*get_position(m1.x-i,m1.y-i));
                 }
             }
+
+            if(player_index == -1){
+            
+                player1_rings.erase(remove(player1_rings.begin(), player1_rings.end(), ringcoordinate), player1_rings.end());
+                player1_rings.push_back(ring2Coordinate);
+            }
+            else{
+                player2_rings.erase(remove(player2_rings.begin(), player2_rings.end(), ringcoordinate), player2_rings.end()); 
+                player2_rings.push_back(ring2Coordinate);
+            }
+
 
             //}
         }
@@ -330,6 +340,15 @@ void Board::execute_move(vector<Move> movelist, int player_index){
             }
 
             set_position(m3.x, m3.y, 0);
+
+            vector<int> ring2Coordinate;
+            ring2Coordinate.push_back(m3.x);
+            ring2Coordinate.push_back(m3.y);
+
+            if(player_index == -1)
+                player1_rings.erase(remove(player1_rings.begin(), player1_rings.end(), ring2Coordinate), player1_rings.end());
+            else 
+                player2_rings.erase(remove(player2_rings.begin(), player2_rings.end(), ring2Coordinate), player2_rings.end());
 
         }
         
@@ -382,7 +401,11 @@ int main(){
         my_board.print_board();
         player_number *= -1;
     }
+    for(int i = 0;i < my_board.player1_rings.size();i++)
+        cout << my_board.player1_rings[i][0] << "  " << my_board.player1_rings[i][1] << '\n';
 
+    for(int i = 0;i < my_board.player2_rings.size();i++)
+        cout << my_board.player2_rings[i][0] << "  " << my_board.player2_rings[i][1] << '\n';
     // for(int i = 0; i < 100; i++){
     //      if(player_number == -1){ cout<<"Player 1 moves : ";}
     //      else{cout<<"Player 2 moves : ";}
