@@ -371,6 +371,7 @@ int main(){
     string line;
     Board my_board = Board(5,5,3);
     int player_number = -1;
+    
     // while (getline(infile, line))
     // {
     //     vector<Move> movvllist = get_move(line);
@@ -389,20 +390,28 @@ int main(){
     //     // process pair (a,b)
     // }
 
-    // for(int i = 0; i < 100; i++){
-    //      string s;
-    //      getline(cin, s);
+    for(int i = 0; i < 100; i++){
+         string s;
+         getline(cin, s);
     
-    //      vector<Move> movvllist = get_move(s);
+         vector<Move> movvllist = get_move(s);
     
     
-    //      my_board.execute_move(movvllist, player_number);
-    //      my_board.print_board();
-    //      player_number *= -1;
-    //  }
+         my_board.execute_move(movvllist, player_number);
+         my_board.print_board();
+         player_number *= -1;
+     }
 
-    vector<int> pos = my_board.map_hex_mysys(4,13);
-    cout<<pos[0]<<pos[1];
+    // vector<int> pos = my_board.map_hex_mysys(4,13);
+    // cout<<pos[0]<<pos[1];
+
+    // vector<string> ply_split = split_string("P 4 12",' ');
+    
+    // vector<Move> moves = get_move("P 4 12 K 3 5 RS 3 1");
+
+    // for(int i = 0; i< moves.size(); i++){
+    //     cout<<moves[i].move_type<<endl<<moves[i].x<<endl<<moves[i].y<<endl;
+    // }
 
     return(1);
 }
