@@ -7,8 +7,7 @@
 
 using namespace std;
 
-vector<string> split_string(string str, char dl)
-{
+vector<string> split_string(string str, char dl){
     string word = "";
     int num = 0;
     str = str + dl;
@@ -27,6 +26,17 @@ vector<string> split_string(string str, char dl)
     return substr_list;
 }
 
+class Direction{
+    public:
+        int xchange;
+        int ychange;
+    
+        Direction(int xc, int yc){
+            xchange = xc;
+            ychange = yc;
+        }
+};
+
 class Move{
     public:
         string move_type;
@@ -40,18 +50,17 @@ class Move{
         }
 };
 
-class Coordinate {
-public :
-    int c1;
-    int c2;    
-    Coordinate(int coordinate1, int coordinate2){
-        c1 = c1;
-        c2 = c2;
-    }
+class Coordinate{
+    public :
+        int c1;
+        int c2;    
+        Coordinate(int coordinate1, int coordinate2){
+            c1 = c1;
+            c2 = c2;
+        }
 };
 
 class Board{
-
     private:
         int score;
         int ring1;
@@ -65,7 +74,6 @@ class Board{
 
         vector<Coordinate> player1_rings;
         vector<Coordinate> player2_rings;
-    
 
     public:
         vector<vector<int> > board_storage;
@@ -97,13 +105,71 @@ class Board{
         vector<int> map_hex_mysys(int hexagon, int index); 
         vector<int> map_mysys_hex(int abscissa, int ordinate);
 
-        bool check_valid(Move mv, int player_index);
-        void execute_move(vector<Move>, int player_index);
+        void execute_move(vector<Move>, int player_number);
 
         void print_board();
         string print_position(int x, int y);
+
+        vector<Board> all_moves(int player_number);
+        // Board adjacent_move(int x, int y, Direction d);
 };
 
+
+vector<Board> Board::all_moves(int player_number){
+    vector<Board> possible_moves;
+
+    vector<Direction> directions;
+    directions.push_back(Direction(0,1));
+    directions.push_back(Direction(1,1));
+    directions.push_back(Direction(1,0));
+    directions.push_back(Direction(0,-1));
+    directions.push_back(Direction(-1,-1));
+    directions.push_back(Direction(-1,0));
+
+    
+    if()
+
+    for(int r = 0; r < )
+        for(int i = 0; i < directions.size(); i++){
+            int x2 = x + directions[i].xchange;
+            int y2 = y + directions[i].ychange;
+            if(x2=0){
+                if(y2 > -5 && y2 < 5){
+                    // possible_moves.push_back(adjacent_move(x))
+                }
+            }
+            // else if(x2=1){
+            // }
+
+            // else if(x2=2){
+
+            // }
+            // else if(x2=3){
+
+            // }
+            // else if(x2=4){
+
+            // }
+            // else if(x2=5){
+
+            // }
+            // else if(x2=-1){
+            // }
+
+            // else if(x2=-2){
+
+            // }
+            // else if(x2=-3){
+
+            // }
+            // else if(x=-4){
+
+            // }
+            // else if(x=-5){
+
+            // }
+            // possible_moves.push_back(adjacent_move(x,y,directions[i]));
+}
 
 vector<Move> Board::get_move(string ply){
     vector<string> ply_vector = split_string(ply, ' ');
@@ -140,7 +206,6 @@ void Board::set_position(int x, int y, int value){
 
     board_storage[x+5][y+5] = value;
 
-////////////////////////////// picked up from aniket
     if(init_value == 2 && value == 1)marker2++;
     else if(init_value == -2 && value == -1)marker1++;
     else if(init_value == -1 && value == 1){
@@ -155,7 +220,6 @@ void Board::set_position(int x, int y, int value){
     else if(init_value == -1 && value == 0)marker1--;
     else if(init_value == 2 && value == 0)ring2--;
     else if(init_value == -2 && value == 0)ring1--;
-/////////////////////////////
 }
 
 vector<int> Board::map_hex_mysys(int hexagon, int index){
@@ -233,14 +297,13 @@ vector<int> Board::map_mysys_hex(int abscissa, int ordinate){
     return hex_coord;
 }
 
-
-void Board::execute_move(vector<Move> movelist, int player_index){
+void Board::execute_move(vector<Move> movelist, int player_number){
     for(int k = 0; k < movelist.size(); k++){
         Move m1 = movelist[k];
         Coordinate ringcoordinate(m1.x, m1.y);
         if(m1.move_type == "P"){
-            set_position(m1.x, m1.y, 2*player_index);
-            if(player_index == -1){
+            set_position(m1.x, m1.y, 2*player_number);
+            if(player_number == -1){
                 ring1++;
                 player1_rings.push_back(ringcoordinate);
             }
@@ -254,8 +317,8 @@ void Board::execute_move(vector<Move> movelist, int player_index){
             Move m2 = movelist[k];
             //if(m2.move_type != "M")throw "invalid move";
             //else {
-            set_position(m1.x, m1.y, player_index);
-            set_position(m2.x, m2.y, 2*player_index);
+            set_position(m1.x, m1.y, player_number);
+            set_position(m2.x, m2.y, 2*player_number);
             if(m1.y == m2.y){
                 if(m2.x > m1.x){
                     for(int i = m1.x+1; i < m2.x; i++)
@@ -295,7 +358,7 @@ void Board::execute_move(vector<Move> movelist, int player_index){
         else if(m1.move_type =="RS"){
             Move m2 = movelist[++k];
             Move m3 = movelist[++k];
-            if(player_index == -1)ring1_removed++;
+            if(player_number == -1)ring1_removed++;
                 else ring2_removed++;
             if(m1.y == m2.y){
                 if(m2.x > m1.x){
