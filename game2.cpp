@@ -7,8 +7,7 @@
 
 using namespace std;
 
-vector<string> split_string(string str, char dl)
-{
+vector<string> split_string(string str, char dl){
     string word = "";
     int num = 0;
     str = str + dl;
@@ -27,6 +26,17 @@ vector<string> split_string(string str, char dl)
     return substr_list;
 }
 
+class Direction{
+    public:
+        int xchange;
+        int ychange;
+    
+        Direction(int xc, int yc){
+            xchange = xc;
+            ychange = yc;
+        }
+};
+
 class Move{
     public:
         string move_type;
@@ -40,7 +50,6 @@ class Move{
         }
 };
 
-
 class Board{
 
     private:
@@ -53,9 +62,6 @@ class Board{
         int rings_removed;  // total rings to be removed
         int ring1_removed;  // rings removed of player1 till now
         int ring2_removed;  // rings removed of player2 till now
-
-        
-    
 
     public:
 
@@ -85,19 +91,132 @@ class Board{
 
         int get_position(int x, int y);
         void set_position(int x, int y, int value);
+        bool check_valid_position(int x, int y);
 
         vector<Move> get_move(string ply);
 
         vector<int> map_hex_mysys(int hexagon, int index); 
         vector<int> map_mysys_hex(int abscissa, int ordinate);
 
-        bool check_valid(Move mv, int player_index);
         void execute_move(vector<Move>, int player_index);
 
         void print_board();
         string print_position(int x, int y);
+
+        vector<Board> all_moves(int player_number);
+        // Board adjacent_move(int x, int y, Direction d);
 };
 
+vector<Board> Board::all_moves(int player_number){
+    vector<Board> possible_moves;
+    vector<vector<int> > player_rings;
+
+    vector<Direction> directions;
+    directions.push_back(Direction(0,1));
+    directions.push_back(Direction(1,1));
+    directions.push_back(Direction(1,0));
+    directions.push_back(Direction(0,-1));
+    directions.push_back(Direction(-1,-1));
+    directions.push_back(Direction(-1,0));
+
+    if(player_number == -1){player_rings = player1_rings;}
+    else{player_rings = player2_rings;}
+
+    for(int r = 0; r < player_rings.size(); r++ ){
+        for(int i = 0; i < directions.size(); i++){
+            
+            int x2 = player_rings[r][0] + directions[i].xchange;
+            int y2 = player_rings[r][1] + directions[i].ychange;
+            
+            if(x2=0){
+                if(y2 > -5 && y2 < 5){
+                    if(get_position(x2,y2) == -2*player_number){}
+                    // possible_moves.push_back(adjacent_move(x))
+                }
+            }
+            // else if(x2=1){
+            // }
+
+            // else if(x2=2){
+
+            // }
+            // else if(x2=3){
+
+            // }
+            // else if(x2=4){
+
+            // }
+            // else if(x2=5){
+
+            // }
+            // else if(x2=-1){
+            // }
+
+            // else if(x2=-2){
+
+            // }
+            // else if(x2=-3){
+
+            // }
+            // else if(x=-4){
+
+            // }
+            // else if(x=-5){
+
+            // }
+        }
+    }
+}
+
+bool Board::check_valid_position(int x, int y){
+
+    if(x = 0){
+        if(y >= -4 && y <= 4){ return true;}
+        else{return false;}
+    }
+
+    else if(x = 1){
+        if(y >= -4 && y <= 5){ return true;}
+        else{return false;}
+    }
+    else if(x = 2){
+        if(y >= -3 && y <= 5){ return true;}
+        else{return false;}
+    }
+    else if(x = 3){
+        if(y >= -2 && y <= 5){ return true;}
+        else{return false;}
+    }
+    else if(x = 4){
+        if(y >= -1 && y <= 5){ return true;}
+        else{return false;}
+    }
+    else if(x = 5){
+        if(y >= 1 && y <= 4){ return true;}
+        else{return false;}
+    }
+
+    else if(x = -1){
+        if(y >= -5 && y <= 4){ return true;}
+        else{return false;}
+    }
+    else if(x = -2){
+        if(y >= -5 && y <= 3){ return true;}
+        else{return false;}
+    }
+    else if(x = -3){
+        if(y >= -5 && y <= 2){ return true;}
+        else{return false;}
+    }
+    else if(x = -4){
+        if(y >= -5 && y <= 1){ return true;}
+        else{return false;}
+    }
+    else if(x=-5){
+        if(y >= -4 && y <= -1){ return true;}
+        else{return false;}
+    }
+}
 
 vector<Move> Board::get_move(string ply){
     vector<string> ply_vector = split_string(ply, ' ');
@@ -134,7 +253,6 @@ void Board::set_position(int x, int y, int value){
 
     board_storage[x+5][y+5] = value;
 
-////////////////////////////// picked up from aniket
     if(init_value == 2 && value == 1)marker2++;
     else if(init_value == -2 && value == -1)marker1++;
     else if(init_value == -1 && value == 1){
@@ -149,7 +267,6 @@ void Board::set_position(int x, int y, int value){
     else if(init_value == -1 && value == 0)marker1--;
     else if(init_value == 2 && value == 0)ring2--;
     else if(init_value == -2 && value == 0)ring1--;
-/////////////////////////////
 }
 
 vector<int> Board::map_hex_mysys(int hexagon, int index){
@@ -226,7 +343,6 @@ vector<int> Board::map_mysys_hex(int abscissa, int ordinate){
     }
     return hex_coord;
 }
-
 
 void Board::execute_move(vector<Move> movelist, int player_index){
     for(int k = 0; k < movelist.size(); k++){
@@ -383,7 +499,6 @@ void Board::print_board(){
     cout << "ring1: " << ring1 << '\n' << "ring2: " << ring2 << '\n';
     cout << "marker1: " << marker1 << '\n' << "marker2: " << marker2 << '\n' << '\n';
 }
-
 
 int main(){
     ifstream infile("thefile.txt");
