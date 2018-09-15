@@ -1,14 +1,48 @@
 #include<iostream>
 #include<vector>
 #include<string>
+
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
+
+#include <boost/foreach.hpp>
 using namespace std;
+
+vector <string> splitstr(string str){
+    vector<string> str_vec;
+    typedef vector<string> Tokens;
+    Tokens tokens;
+    boost::split( tokens, str, boost::is_any_of(" ") );
+    BOOST_FOREACH( const string& i, tokens){
+        str_vec.push_back(i);
+    }
+    return str_vec; 
+}
+
 
 class Move{
 public:
     string move_type;
     int hexagon;
     int index;
+
+    Move(string type, int hex, int ind){
+        move_type = type;
+        hexagon = hex;
+        index = ind;
+        }
 };
+
+vector<Move> movlist(string ply){
+    vector<Move> ret;
+    vector<string> movstr = splitstr(ply);
+    for(int i = 0; i < movstr.size()/3; i++){
+        Move m1(movstr[i], stoi(movstr[i+1]), stoi(movstr[i+2]));
+        ret.push_back(m1);
+    }
+    return ret;
+}
+
 
 class Board {
 
@@ -60,9 +94,11 @@ public:
     vector<int> map_hex_mysys(int hexagon, int index); 
 
     vector<int> map_mysys_hex(int abscissa, int ordinate);
-// player_index can get value 0 or 1, 0 means player1 and 1 means player2
+// player_index can get value -1 or 1, -1 means player1 and 1 means player2
+// 1 for marker2-player2, 2 for ring2-player2
+    vector<Move> totalmoves(string s);
 
-    void execute_move(Move mv, int player_index);
+    void execute_move(vector<Move> movelist, int player_index);
 
     bool check_valid(Move mv, int player_index);
 };
@@ -180,8 +216,67 @@ vector<int> Board::map_mysys_hex(int abscissa, int ordinate){
     return hex_coord;
 }
 
-void Board::execute_move(Move mv, int player_index){
+vector<Move> Board::totalmoves(string move){
+}
 
+void Board::execute_move(vector<Move> movelist, int player_index){
+    for(int i = 0; i < movelist.size(); i++){
+        Move m1 = movelist[i];
+        vector<int> mycoord = map_hex_mysys(m1.hexagon, m1.index);
+        if(m1.move_type == "P"){
+            setpositionValue(mycoord[0], mycoord[1], 2*player_index);
+        }
+        else if(m1.move_type == "S"){
+            i++;
+            Move m2 = movelist[i];
+            vector<int> mycoord2 = map_hex_mysys(m2.hexagon, m2.index);
+            if(m2.move_type != "M")throw "invalid move";
+            else {
+                setpositionValue(mycoord[0], mycoord[1], player_index);
+                setpositionValue(mycoord2[0], mycoord2[1], 2*player_index);
+                if(mycoord[1] == mycoord2[1]){
+                    if(mycoord2[0] > mycoord[0]){
+                        for(int i = mycoord[0]+1; i < mycoord2[0]; i++)
+                            setpositionValue(i, mycoord[1], -1* getpositionValue(i, mycoord[1]));
+                        //setpositionValue(mycoord2[0], mycoord2[1], 2*player_index);
+                    }
+                    else{
+                        for(int i = mycoord[0]+1; i > mycoord2[0]; i--)
+                            setpositionValue(i, mycoord[1], -1*getpositionValue(i, mycoord[1]));
+                        //setpositionValue(mycoord2[0], mycoord2[1], 2*player_index);
+                    }                
+                }
+
+                else if(mycoord[0] == mycoord2[0]){
+                    if(mycoord2[1] > mycoord[1]){
+                        for(int i = mycoord[1]+1; i < mycoord2[1]; i++)
+                            setpositionValue(mycoord[0], i, -1*getpositionValue(mycoord[0], i));
+                        //setpositionValue(mycoord2[0], mycoord2[1], 2*player_index);
+                    }
+                    else{
+                        for(int i = mycoord[1]+1; i > mycoord2[1]; i--)
+                            setpositionValue(mycoord[0], i, -1*getpositionValue(mycoord[0], i));
+                        //setpositionValue(mycoord2[0], mycoord2[1], 2*player_index);
+                    }
+                }
+
+                else if(mycoord2[1]-mycoord[1] == mycoord2[0]-mycoord[0]){
+                    if(mycoord2[0] > mycoord[0]){
+                        for(int i = 1; i < mycoord2[0]-mycoord[0]; i++)
+                            setpositionValue(mycoord[0]+i, mycoord[1]+i, -1*getpositionValue(mycoord[0]+i, mycoord[1]+i));
+                        setpositionValue(mycoord2[0], mycoord2[1], 2*player_index);                        
+                    }
+                    else{
+                        for(int i = 1; i < mycoord[0]-mycoord2[0]; i--)
+                            setpositionValue(mycoord[0]-i, mycoord2[1]-i, -1*getpositionValue(mycoord[0]-i,mycoord[1]-i));
+                        setpositionValue(mycoord2[0], mycoord2[1], 2*player_index);
+                    }
+                }
+
+            }
+        }
+        
+    }
 }
 
 int main(){
