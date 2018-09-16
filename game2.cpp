@@ -66,10 +66,30 @@ class Board{
 
     public:
 
+        vector<vector<int> > board_storage;
+
         vector<vector<int> > player1_rings;
         vector<vector<int> > player2_rings;
 
-        vector<vector<int> > board_storage;
+        Board(){
+            vector<int> element;
+            for(int i = -5; i <= 5; i++)
+                element.push_back(0);
+            for(int i = -5; i <= 5; i++)
+                board_storage.push_back(element);
+            
+            element.clear();
+
+            board_size = 5;
+            markers_removed = 5;
+            rings_removed = 3;
+            ring1 = 0;
+            ring2 = 0;
+            marker1 = 0;
+            marker2 = 0;
+            ring1_removed = 0;
+            ring2_removed = 0;
+        }
 
         Board(int b, int m, int r){
             vector<int> element;
@@ -107,11 +127,29 @@ class Board{
 
         Board copy_board();
 
+
+        vector<int> startend(int s1, int f1, int s2, int f2, int value);
+        vector<int> cons_marker(int value);
+
         vector<Board> all_moves(int player_number);
         Board adjacent_move(int x, int y, Direction d);
+
+        vector<vector<int> > get_player_rings(int get_player_rings);
+};
+
+class Bot{
+    private:
+        Board state;
+        vector<Move> bot_move;
+    public:
+        Bot(Board b, vector<Move> m){
+            state = b;
+            bot_move = m;
+        }
 };
 
 vector<Board> Board::all_moves(int player_number){
+    
     vector<Board> possible_moves;
     vector<vector<int> > player_rings;
 
@@ -123,27 +161,40 @@ vector<Board> Board::all_moves(int player_number){
     directions.push_back(Direction(-1,-1));
     directions.push_back(Direction(-1,0));
 
-    if(player_number == -1){player_rings = player1_rings;}
-    else{player_rings = player2_rings;}
+    if(player_number == -1){ player_rings = player1_rings;}
+    else if(player_number == 1){player_rings = player2_rings;}
 
-    for(int r = 0; r < player_rings.size(); r++ ){
-        for(int i = 0; i < directions.size(); i++){
-            
+    for(int r = 0; r < player_rings.size(); r++){
+        for(int i = 0; i< directions.size(); i++){
+
             int x2 = player_rings[r][0] + directions[i].xchange;
             int y2 = player_rings[r][1] + directions[i].ychange;
 
-            while(check_valid_position(x2, y2)){
+            while(check_valid_position(x2,y2)){
                 if(get_position(x2,y2) == -2*player_number || get_position(x2,y2) == 2*player_number){break;}
                 else if(get_position(x2,y2) == 0){
                     Board new_board = copy_board();
                     vector<Move> new_moves;
-                    new_moves.push_back(Move("S", player_rings[r][0], player_rings[r][1]));
-                    new_moves.push_back(Move("M", x2, y2));
-                    new_board.execute_move(new_moves, player_number);
+                    new_moves.push_back(Move("S",player_rings[r][0],player_rings[r][1]));
+                    new_moves.push_back(Move("M",x2,y2));
+                    new_board.execute_move(new_moves,player_number);
                     possible_moves.push_back(new_board);
                 }
+
+                x2 += directions[i].xchange;
+                y2 += directions[i].ychange;
             }
         }
+    }
+    return possible_moves;
+}
+
+vector<vector<int> > Board::get_player_rings(int player_number){
+    if(player_number == -1){
+        return player1_rings;
+    }
+    else{
+        return player2_rings;
     }
 }
 
@@ -166,51 +217,55 @@ Board Board::copy_board(){
 
 bool Board::check_valid_position(int x, int y){
 
-    if(x = 0){
+    if(x == 0){
         if(y >= -4 && y <= 4){ return true;}
         else{return false;}
     }
 
-    else if(x = 1){
+    else if(x == 1){
         if(y >= -4 && y <= 5){ return true;}
         else{return false;}
     }
-    else if(x = 2){
+    else if(x == 2){
         if(y >= -3 && y <= 5){ return true;}
         else{return false;}
     }
-    else if(x = 3){
+    else if(x == 3){
         if(y >= -2 && y <= 5){ return true;}
         else{return false;}
     }
-    else if(x = 4){
+    else if(x == 4){
         if(y >= -1 && y <= 5){ return true;}
         else{return false;}
     }
-    else if(x = 5){
+    else if(x == 5){
         if(y >= 1 && y <= 4){ return true;}
         else{return false;}
     }
 
-    else if(x = -1){
+    else if(x == -1){
         if(y >= -5 && y <= 4){ return true;}
         else{return false;}
     }
-    else if(x = -2){
+    else if(x == -2){
         if(y >= -5 && y <= 3){ return true;}
         else{return false;}
     }
-    else if(x = -3){
+    else if(x == -3){
         if(y >= -5 && y <= 2){ return true;}
         else{return false;}
     }
-    else if(x = -4){
+    else if(x == -4){
         if(y >= -5 && y <= 1){ return true;}
         else{return false;}
     }
-    else if(x=-5){
+    else if(x == -5){
         if(y >= -4 && y <= -1){ return true;}
         else{return false;}
+    }
+
+    else{
+        return false;
     }
 }
 
@@ -338,6 +393,199 @@ vector<int> Board::map_mysys_hex(int abscissa, int ordinate){
         hex_coord[1] = ordinate;
     }
     return hex_coord;
+}
+
+vector<int> Board::startend(int x1, int y1, int x2, int y2, int value){
+    vector<int> ls;
+    ls.push_back(0);
+    ls.push_back(0);
+    ls.push_back(0);
+    ls.push_back(0);
+    int firstx = 0;
+    int firsty = 0;
+    int lastx = 0;
+    int lasty = 0;
+    int check = 0;
+    if(y1 == y2){
+        for(int i = x1; i <= x2; i++){
+            if(check==0){
+                if(get_position(i,y1) == value){
+                    firstx = i;
+                    firsty = y1;
+                    check = 1;
+                }
+            }
+            if(check==1){
+                if(get_position(i,y1) == value){
+                    lastx = i;
+                    lasty = y1;
+                    if(i == x2){
+                        if(x2 - firstx >= 4){
+                            ls[0] = firstx;ls[1] = firsty; ls[2] = lastx; ls[3] = lasty;
+                        }
+                    }
+                }
+                else if(get_position(i,y1) != value){
+                    check = 0;
+                    if(i-firstx >= 5){
+                        ls[0] = firstx;ls[1] = firsty; ls[2] = lastx; ls[3] = lasty;
+                    }
+                }
+            }
+        }
+    }
+
+    else if(x1 == x2){
+        for(int i = y1; i <= y2; i++){
+            if(check == 0){
+                if(get_position(x1, i) == value){
+                    firstx = x1;
+                    firsty = i;
+                    check = 1;
+                }
+            }
+            else if(check == 1){
+                if(get_position(x1, i) == value){
+                    lastx = x1;
+                    lasty = i;
+                    if(i == y2){
+                        if(y2 - firsty >= 4){
+                            ls[0] = firstx;ls[1] = firsty; ls[2] = lastx; ls[3] = lasty;
+                        }
+                    }
+                }
+                else if(get_position(x1, i) != value){
+                    check = 0;
+                    if(i-firsty >= 5){
+                        ls[0] = firstx;ls[1] = firsty; ls[2] = lastx; ls[3] = lasty;
+                    }
+                }
+            }
+        }
+    }
+
+    else if(y1-x1 == y2-x2){
+        for(int i = x1; i<= x2; i++){
+            if(check == 0){
+                if(get_position(i, y1+i-x1) == value){
+                    firstx = i;
+                    firsty = y1+i-x1;
+                    check = 1;
+                }
+            }
+            else if(check == 1){
+                if(get_position(i,y1+i-x1) == value){
+                    lastx = i;lasty = y1+i-x1;
+                    if(i == x2){
+                        if(x2 - firstx >= 4){
+                            ls[0] = firstx;ls[1] = firsty; ls[2] = lastx; ls[3] = lasty;
+                        }
+                    }
+                }
+                else if(get_position(i, y1+i-x1) != value){
+                    check = 0;
+                    if(i-firstx >= 5){
+                        ls[0] = firstx;ls[1] = firsty; ls[2] = lastx; ls[3] = lasty;
+                    }
+                }
+            }
+        }
+    }
+    return ls;
+}
+
+vector<int> Board::cons_marker(int value){
+    vector<int> cons_mark;
+
+    for(int i = 1; i < 5; i++){
+        vector<int> vec = startend(-i,5-i,5,5-i,value);
+        if(!((vec[0] == 0) && (vec[1] == 0) && (vec[2] == 0) && (vec[3] == 0))){
+            cons_mark.push_back(vec[0]);
+            cons_mark.push_back(vec[1]);
+            cons_mark.push_back(vec[2]);
+            cons_mark.push_back(vec[3]);
+        }
+    }
+
+
+    vector<int> veco = startend(-4,0,4,0,value);
+    if(!((veco[0] == 0) && (veco[1] == 0) && (veco[2] == 0) && (veco[3] == 0))){
+        cons_mark.push_back(veco[0]);
+        cons_mark.push_back(veco[1]);
+        cons_mark.push_back(veco[2]);
+        cons_mark.push_back(veco[3]);
+    }
+
+    for(int i = 1; i < 5; i++){
+        vector<int> vec = startend(-5,-i,5,-i,value);
+        if(!((vec[0] == 0) && (vec[1] == 0) && (vec[2] == 0) && (vec[3] == 0))){
+            cons_mark.push_back(vec[0]);
+            cons_mark.push_back(vec[1]);
+            cons_mark.push_back(vec[2]);
+            cons_mark.push_back(vec[3]);
+        }
+    }
+
+    for(int i = 1; i < 5; i++){
+        vector<int> vec = startend(i-5,-5,i-5,i,value);
+        if(!((vec[0] == 0) && (vec[1] == 0) && (vec[2] == 0) && (vec[3] == 0))){
+            cons_mark.push_back(vec[0]);
+            cons_mark.push_back(vec[1]);
+            cons_mark.push_back(vec[2]);
+            cons_mark.push_back(vec[3]);
+        }
+    }
+
+
+    veco = startend(0,-4,0,4,value);
+    if(!((veco[0] == 0) && (veco[1] == 0) && (veco[2] == 0) && (veco[3] == 0))){
+        cons_mark.push_back(veco[0]);
+        cons_mark.push_back(veco[1]);
+        cons_mark.push_back(veco[2]);
+        cons_mark.push_back(veco[3]);
+    }
+
+    for(int i = 1; i < 5; i++){
+        vector<int> vec = startend(i,i-5,i,5,value);
+        if(!((vec[0] == 0) && (vec[1] == 0) && (vec[2] == 0) && (vec[3] == 0))){
+            cons_mark.push_back(vec[0]);
+            cons_mark.push_back(vec[1]);
+            cons_mark.push_back(vec[2]);
+            cons_mark.push_back(vec[3]);
+        }
+    }
+
+    for(int i = 1; i < 5; i++){
+        vector<int> vec = startend(-5,-i,i,5,value);
+        if(!((vec[0] == 0) && (vec[1] == 0) && (vec[2] == 0) && (vec[3] == 0))){
+            cons_mark.push_back(vec[0]);
+            cons_mark.push_back(vec[1]);
+            cons_mark.push_back(vec[2]);
+            cons_mark.push_back(vec[3]);
+        }
+    }
+
+
+    veco = startend(-4,-4,4,4,value);
+    if(!((veco[0] == 0) && (veco[1] == 0) && (veco[2] == 0) && (veco[3] == 0))){
+        cons_mark.push_back(veco[0]);
+        cons_mark.push_back(veco[1]);
+        cons_mark.push_back(veco[2]);
+        cons_mark.push_back(veco[3]);
+    }
+
+    for(int i = 1; i < 5; i++){
+        vector<int> vec = startend(i-5,-5,5,5-i,value);
+        if(!((vec[0] == 0) && (vec[1] == 0) && (vec[2] == 0) && (vec[3] == 0))){
+            cons_mark.push_back(vec[0]);
+            cons_mark.push_back(vec[1]);
+            cons_mark.push_back(vec[2]);
+            cons_mark.push_back(vec[3]);
+        }
+    }
+    if(cons_mark.size() == 0)cons_mark.push_back(0);
+
+    return cons_mark;
 }
 
 void Board::execute_move(vector<Move> movelist, int player_index){
@@ -513,27 +761,66 @@ int main(){
         player_number *= -1;
     }
 
-    Board b2 = my_board.copy_board();
-    b2.print_board();
+    vector<int> v = my_board.cons_marker(-1);
+    for(int i = 0; i< v.size(); i++){ cout << v[i] << endl;} 
 
-    vector<Board> test;
-    cout << "PRINTING ALL POSSIBLE MOVES"<<endl;
-    cout << "PRINTING ALL POSSIBLE MOVES"<<endl;
-    cout << "PRINTING ALL POSSIBLE MOVES"<<endl;
-    cout << "PRINTING ALL POSSIBLE MOVES"<<endl<<endl;
 
+
+    // cout << "PRINTING ALL POSSIBLE MOVES -"<<endl;
+    // cout << "PRINTING ALL POSSIBLE MOVES -"<<endl<<endl;
+
+
+    // vector<Board> test;
     // test = my_board.all_moves(-1);
 
     // for(int i = 0; i < test.size(); i++){
     //     test[i].print_board();
     // }
 
-    // for(int i = 0;i < my_board.player1_rings.size();i++)
-    //     cout << my_board.player1_rings[i][0] << "  " << my_board.player1_rings[i][1] << '\n';
+///////////////////////////////DEBUG
+    // vector<Board> possible_moves;
 
-    // for(int i = 0;i < my_board.player2_rings.size();i++)
-    //     cout << my_board.player2_rings[i][0] << "  " << my_board.player2_rings[i][1] << '\n';
+    // vector<Direction> directions;
+    // directions.push_back(Direction(0,1));
+    // directions.push_back(Direction(1,1));
+    // directions.push_back(Direction(1,0));
+    // directions.push_back(Direction(0,-1));
+    // directions.push_back(Direction(-1,-1));
+    // directions.push_back(Direction(-1,0));
+    
+    // for(int r = 0; r < my_board.player1_rings.size(); r++){
+    //     cout << my_board.player1_rings[r][0] << "," << my_board.player1_rings[r][1] << " -> \n";
 
+    //     for(int i = 0; i < directions.size(); i++){
+            
+    //         int x2 = my_board.player1_rings[r][0] + directions[i].xchange;
+    //         int y2 = my_board.player1_rings[r][1] + directions[i].ychange;
+
+    //         while(my_board.check_valid_position(x2, y2)){
+
+    //             if(my_board.get_position(x2,y2) == -2*player_number || my_board.get_position(x2,y2) == 2*player_number){break;}
+    //             else if(my_board.get_position(x2,y2) == 0){
+    //                 Board new_board = my_board.copy_board();
+    //                 vector<Move> new_moves;
+    //                 new_moves.push_back(Move("S", my_board.player1_rings[r][0], my_board.player1_rings[r][1]));
+    //                 new_moves.push_back(Move("M", x2, y2));
+    //                 new_board.execute_move(new_moves, player_number);
+    //                 possible_moves.push_back(new_board);
+    //             }
+    //             cout << "\t" <<x2 << "," << y2 << "\n";
+
+    //             x2 += directions[i].xchange;
+    //             y2 += directions[i].ychange;
+    //         }
+    //     }
+    // }
+
+    // for(int i = 0; i < possible_moves.size(); i++){
+    //     possible_moves[i].print_board();
+    // }
+///////////////////////////////////
+
+////////////////// PLAY GAME MANUAL
     // for(int i = 0; i < 100; i++){
     //      if(player_number == -1){ cout<<"Player 1 moves : ";}
     //      else{cout<<"Player 2 moves : ";}
@@ -546,6 +833,6 @@ int main(){
     //      my_board.print_board();
     //      player_number *= -1;
     //  }
-
+///////////////////////////////////
     return(1);
 }
