@@ -175,6 +175,9 @@ public:
     bool check_valid(Move mv, int player_index);
 
     vector<int> startend(int s1, int f1, int s2, int f2, int value);
+    
+    vector<int> moves_row(vector<int> ls);
+    
     vector<int> cons_marker(int value);
 
     void print_board();
@@ -383,93 +386,96 @@ vector<int> Board::startend(int x1, int y1, int x2, int y2, int value){
     return ls;
 }
 
+vector<int> Board::moves_row(vector<int> ls){
+	vector<int> vec;
+	if(!((ls[0] == 0) && (ls[1] == 0) && (ls[2] == 0) && (ls[3] == 0))){
+		int x = ls[2] - ls[0];
+		int y = ls[3] - ls[1];
+		int size = max(x,y)+1;
+		if(x != 0)x=1;
+		if(y != 0)y=1;
+		for(int i = 0; i <= size-5; i++){
+			vec.push_back(ls[0]+i*x);
+			vec.push_back(ls[1]+i*y);
+			vec.push_back(ls[0]+(i+4)*x);
+			vec.push_back(ls[1]+(i+4)*y);
+		}
+	}
+	else vec.push_back(0);
+	return vec;
+}
+
+
+
 vector<int> Board::cons_marker(int value){
     vector<int> cons_mark;
 
     for(int i = 1; i < 5; i++){
-        vector<int> vec = startend(-i,5-i,5,5-i,value);
-        if(!((vec[0] == 0) && (vec[1] == 0) && (vec[2] == 0) && (vec[3] == 0))){
-            cons_mark.push_back(vec[0]);
-            cons_mark.push_back(vec[1]);
-            cons_mark.push_back(vec[2]);
-            cons_mark.push_back(vec[3]);
+        vector<int> vec = moves_row(startend(-i,5-i,5,5-i,value));
+        if(vec.size() != 1){
+			for(int j = 0;j < vec.size(); j++)
+				cons_mark.push_back(vec[j]);
         }
     }
 
 
-    vector<int> veco = startend(-4,0,4,0,value);
-    if(!((veco[0] == 0) && (veco[1] == 0) && (veco[2] == 0) && (veco[3] == 0))){
-        cons_mark.push_back(veco[0]);
-        cons_mark.push_back(veco[1]);
-        cons_mark.push_back(veco[2]);
-        cons_mark.push_back(veco[3]);
+    vector<int> veco = moves_row(startend(-4,0,4,0,value));
+    if(veco.size() != 1){
+        for(int j = 0;j < veco.size(); j++)
+            cons_mark.push_back(veco[j]);
     }
 
     for(int i = 1; i < 5; i++){
-        vector<int> vec = startend(-5,-i,5,-i,value);
-        if(!((vec[0] == 0) && (vec[1] == 0) && (vec[2] == 0) && (vec[3] == 0))){
-            cons_mark.push_back(vec[0]);
-            cons_mark.push_back(vec[1]);
-            cons_mark.push_back(vec[2]);
-            cons_mark.push_back(vec[3]);
+        vector<int> vec = moves_row(startend(-5,-i,5,-i,value));
+        if(vec.size() != 1){
+            for(int j = 0;j < vec.size(); j++)
+               cons_mark.push_back(vec[j]);
         }
     }
 
     for(int i = 1; i < 5; i++){
-        vector<int> vec = startend(i-5,-5,i-5,i,value);
-        if(!((vec[0] == 0) && (vec[1] == 0) && (vec[2] == 0) && (vec[3] == 0))){
-            cons_mark.push_back(vec[0]);
-            cons_mark.push_back(vec[1]);
-            cons_mark.push_back(vec[2]);
-            cons_mark.push_back(vec[3]);
+        vector<int> vec = moves_row(startend(i-5,-5,i-5,i,value));
+        if(vec.size() != 1){
+            for(int j = 0;j < vec.size(); j++)
+                cons_mark.push_back(vec[j]);
         }
     }
 
 
-    veco = startend(0,-4,0,4,value);
-    if(!((veco[0] == 0) && (veco[1] == 0) && (veco[2] == 0) && (veco[3] == 0))){
-        cons_mark.push_back(veco[0]);
-        cons_mark.push_back(veco[1]);
-        cons_mark.push_back(veco[2]);
-        cons_mark.push_back(veco[3]);
+    veco = moves_row(startend(0,-4,0,4,value));
+    if(veco.size() != 1){
+        for(int j = 0;j < veco.size(); j++)
+            cons_mark.push_back(veco[j]);
     }
 
     for(int i = 1; i < 5; i++){
-        vector<int> vec = startend(i,i-5,i,5,value);
-        if(!((vec[0] == 0) && (vec[1] == 0) && (vec[2] == 0) && (vec[3] == 0))){
-            cons_mark.push_back(vec[0]);
-            cons_mark.push_back(vec[1]);
-            cons_mark.push_back(vec[2]);
-            cons_mark.push_back(vec[3]);
+        vector<int> vec = moves_row(startend(i,i-5,i,5,value));
+        if(vec.size() != 1){
+            for(int j = 0;j < vec.size(); j++)
+            cons_mark.push_back(vec[j]);
         }
     }
 
     for(int i = 1; i < 5; i++){
-        vector<int> vec = startend(-5,-i,i,5,value);
-        if(!((vec[0] == 0) && (vec[1] == 0) && (vec[2] == 0) && (vec[3] == 0))){
-            cons_mark.push_back(vec[0]);
-            cons_mark.push_back(vec[1]);
-            cons_mark.push_back(vec[2]);
-            cons_mark.push_back(vec[3]);
+        vector<int> vec = moves_row(startend(-5,-i,i,5,value));
+        if(vec.size() != 1){
+            for(int j = 0;j < vec.size(); j++)
+            cons_mark.push_back(vec[j]);
         }
     }
 
 
-    veco = startend(-4,-4,4,4,value);
-    if(!((veco[0] == 0) && (veco[1] == 0) && (veco[2] == 0) && (veco[3] == 0))){
-        cons_mark.push_back(veco[0]);
-        cons_mark.push_back(veco[1]);
-        cons_mark.push_back(veco[2]);
-        cons_mark.push_back(veco[3]);
+    veco = moves_row(startend(-4,-4,4,4,value));
+    if(veco.size() != 1){
+        for(int j = 0;j < veco.size(); j++)
+            cons_mark.push_back(veco[j]);
     }
 
     for(int i = 1; i < 5; i++){
-        vector<int> vec = startend(i-5,-5,5,5-i,value);
-        if(!((vec[0] == 0) && (vec[1] == 0) && (vec[2] == 0) && (vec[3] == 0))){
-            cons_mark.push_back(vec[0]);
-            cons_mark.push_back(vec[1]);
-            cons_mark.push_back(vec[2]);
-            cons_mark.push_back(vec[3]);
+        vector<int> vec = moves_row(startend(i-5,-5,5,5-i,value));
+        if(vec.size() != 1){
+            for(int j = 0;j < vec.size(); j++)
+                cons_mark.push_back(vec[j]);
         }
     }
     if(cons_mark.size() == 0)cons_mark.push_back(0);
