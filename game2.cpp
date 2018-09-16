@@ -497,7 +497,7 @@ void Board::print_board(){
 }
 
 int main(){
-    ifstream infile("thefile.txt");
+    ifstream infile("inputfile.txt");
     string line;
     Board my_board = Board(5,5,3);
     int player_number = -1;
@@ -512,11 +512,28 @@ int main(){
         my_board.print_board();
         player_number *= -1;
     }
-    for(int i = 0;i < my_board.player1_rings.size();i++)
-        cout << my_board.player1_rings[i][0] << "  " << my_board.player1_rings[i][1] << '\n';
 
-    for(int i = 0;i < my_board.player2_rings.size();i++)
-        cout << my_board.player2_rings[i][0] << "  " << my_board.player2_rings[i][1] << '\n';
+    Board b2 = my_board.copy_board();
+    b2.print_board();
+
+    vector<Board> test;
+    cout << "PRINTING ALL POSSIBLE MOVES"<<endl;
+    cout << "PRINTING ALL POSSIBLE MOVES"<<endl;
+    cout << "PRINTING ALL POSSIBLE MOVES"<<endl;
+    cout << "PRINTING ALL POSSIBLE MOVES"<<endl<<endl;
+
+    // test = my_board.all_moves(-1);
+
+    // for(int i = 0; i < test.size(); i++){
+    //     test[i].print_board();
+    // }
+
+    // for(int i = 0;i < my_board.player1_rings.size();i++)
+    //     cout << my_board.player1_rings[i][0] << "  " << my_board.player1_rings[i][1] << '\n';
+
+    // for(int i = 0;i < my_board.player2_rings.size();i++)
+    //     cout << my_board.player2_rings[i][0] << "  " << my_board.player2_rings[i][1] << '\n';
+
     // for(int i = 0; i < 100; i++){
     //      if(player_number == -1){ cout<<"Player 1 moves : ";}
     //      else{cout<<"Player 2 moves : ";}
