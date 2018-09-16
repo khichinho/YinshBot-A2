@@ -168,51 +168,55 @@ Board Board::copy_board(){
 
 bool Board::check_valid_position(int x, int y){
 
-    if(x = 0){
+    if(x == 0){
         if(y >= -4 && y <= 4){ return true;}
         else{return false;}
     }
 
-    else if(x = 1){
+    else if(x == 1){
         if(y >= -4 && y <= 5){ return true;}
         else{return false;}
     }
-    else if(x = 2){
+    else if(x == 2){
         if(y >= -3 && y <= 5){ return true;}
         else{return false;}
     }
-    else if(x = 3){
+    else if(x == 3){
         if(y >= -2 && y <= 5){ return true;}
         else{return false;}
     }
-    else if(x = 4){
+    else if(x == 4){
         if(y >= -1 && y <= 5){ return true;}
         else{return false;}
     }
-    else if(x = 5){
+    else if(x == 5){
         if(y >= 1 && y <= 4){ return true;}
         else{return false;}
     }
 
-    else if(x = -1){
+    else if(x == -1){
         if(y >= -5 && y <= 4){ return true;}
         else{return false;}
     }
-    else if(x = -2){
+    else if(x == -2){
         if(y >= -5 && y <= 3){ return true;}
         else{return false;}
     }
-    else if(x = -3){
+    else if(x == -3){
         if(y >= -5 && y <= 2){ return true;}
         else{return false;}
     }
-    else if(x = -4){
+    else if(x == -4){
         if(y >= -5 && y <= 1){ return true;}
         else{return false;}
     }
-    else if(x=-5){
+    else if(x == -5){
         if(y >= -4 && y <= -1){ return true;}
         else{return false;}
+    }
+
+    else{
+        return false;
     }
 }
 
@@ -527,29 +531,46 @@ int main(){
     directions.push_back(Direction(-1,0));
 
     vector<Board> test;
-    // test = my_board.all_moves(-1);
+    test = my_board.all_moves(-1);
 
-    // for(int i = 0; i < test.size(); i++){
-    //     test[i].print_board();
-    // }
+    for(int i = 0; i < test.size(); i++){
+        test[i].print_board();
+    }
 
 /////////////////////DEBUG
-    for(int r = 0; r < my_board.player1_rings.size(); r++){
-        cout << my_board.player1_rings[r][0] << "," << my_board.player1_rings[r][1] << " -> \n";
+    // vector<Board> possible_moves;
+    
+    // for(int r = 0; r < my_board.player1_rings.size(); r++){
+    //     cout << my_board.player1_rings[r][0] << "," << my_board.player1_rings[r][1] << " -> \n";
 
-        for(int i = 0; i < directions.size(); i++){
+    //     for(int i = 0; i < directions.size(); i++){
             
-            int x2 = my_board.player1_rings[r][0] + directions[i].xchange;
-            int y2 = my_board.player1_rings[r][1] + directions[i].xchange;
-            
-            while(my_board.check_valid_position(x2, y2)){
-                cout << "\t" <<x2 << "," << y2 << "\n";
+    //         int x2 = my_board.player1_rings[r][0] + directions[i].xchange;
+    //         int y2 = my_board.player1_rings[r][1] + directions[i].ychange;
 
-                x2 += directions[i].xchange;
-                y2 += directions[i].ychange;
-            }
-        }
-    }
+    //         while(my_board.check_valid_position(x2, y2)){
+
+    //             if(my_board.get_position(x2,y2) == -2*player_number || my_board.get_position(x2,y2) == 2*player_number){break;}
+    //             else if(my_board.get_position(x2,y2) == 0){
+    //                 Board new_board = my_board.copy_board();
+    //                 vector<Move> new_moves;
+    //                 new_moves.push_back(Move("S", my_board.player1_rings[r][0], my_board.player1_rings[r][1]));
+    //                 new_moves.push_back(Move("M", x2, y2));
+    //                 new_board.execute_move(new_moves, player_number);
+    //                 possible_moves.push_back(new_board);
+    //             }
+    //             cout << "\t" <<x2 << "," << y2 << "\n";
+
+    //             x2 += directions[i].xchange;
+    //             y2 += directions[i].ychange;
+    //         }
+    //     }
+    // }
+
+
+    // for(int i = 0; i < possible_moves.size(); i++){
+    //     possible_moves[i].print_board();
+    // }
 //////////////////////////
 
     // for(int i = 0;i < my_board.player1_rings.size();i++)
