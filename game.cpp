@@ -174,6 +174,9 @@ public:
 
     bool check_valid(Move mv, int player_index);
 
+    vector<int> startend(int s1, int f1, int s2, int f2, int value);
+    vector<int> cons_marker(int value);
+
     void print_board();
 };
 
@@ -278,6 +281,201 @@ vector<int> Board::map_mysys_hex(int abscissa, int ordinate){
         hex_coord[1] = ordinate;
     }
     return hex_coord;
+}
+
+vector<int> Board::startend(int x1, int y1, int x2, int y2, int value){
+    vector<int> ls;
+    ls.push_back(0);
+    ls.push_back(0);
+    ls.push_back(0);
+    ls.push_back(0);
+    int firstx = 0;
+    int firsty = 0;
+    int lastx = 0;
+    int lasty = 0;
+    int check = 0;
+    if(y1 == y2){
+        for(int i = x1; i <= x2; i++){
+            if(check==0){
+                if(getpositionValue(i,y1) == value){
+                    firstx = i;
+                    firsty = y1;
+                    check = 1;
+                }
+            }
+            if(check==1){
+                if(getpositionValue(i,y1) == value){
+                    lastx = i;
+                    lasty = y1;
+                    if(i == x2){
+                        if(x2 - firstx >= 4){
+                            ls[0] = firstx;ls[1] = firsty; ls[2] = lastx; ls[3] = lasty;
+                        }
+                    }
+                }
+                else if(getpositionValue(i,y1) != value){
+                    check = 0;
+                    if(i-firstx >= 5){
+                        ls[0] = firstx;ls[1] = firsty; ls[2] = lastx; ls[3] = lasty;
+                    }
+                }
+            }
+        }
+    }
+
+    else if(x1 == x2){
+        for(int i = y1; i <= y2; i++){
+            if(check == 0){
+                if(getpositionValue(x1, i) == value){
+                    firstx = x1;
+                    firsty = i;
+                    check = 1;
+                }
+            }
+            else if(check == 1){
+                if(getpositionValue(x1, i) == value){
+                    lastx = x1;
+                    lasty = i;
+                    if(i == y2){
+                        if(y2 - firsty >= 4){
+                            ls[0] = firstx;ls[1] = firsty; ls[2] = lastx; ls[3] = lasty;
+                        }
+                    }
+                }
+                else if(getpositionValue(x1, i) != value){
+                    check = 0;
+                    if(i-firsty >= 5){
+                        ls[0] = firstx;ls[1] = firsty; ls[2] = lastx; ls[3] = lasty;
+                    }
+                }
+            }
+        }
+    }
+
+    else if(y1-x1 == y2-x2){
+        for(int i = x1; i<= x2; i++){
+            if(check == 0){
+                if(getpositionValue(i, y1+i-x1) == value){
+                    firstx = i;
+                    firsty = y1+i-x1;
+                    check = 1;
+                }
+            }
+            else if(check == 1){
+                if(getpositionValue(i,y1+i-x1) == value){
+                    lastx = i;lasty = y1+i-x1;
+                    if(i == x2){
+                        if(x2 - firstx >= 4){
+                            ls[0] = firstx;ls[1] = firsty; ls[2] = lastx; ls[3] = lasty;
+                        }
+                    }
+                }
+                else if(getpositionValue(i, y1+i-x1) != value){
+                    check = 0;
+                    if(i-firstx >= 5){
+                        ls[0] = firstx;ls[1] = firsty; ls[2] = lastx; ls[3] = lasty;
+                    }
+                }
+                                
+            }
+        }
+    }
+    return ls;
+}
+
+vector<int> Board::cons_marker(int value){
+    vector<int> cons_mark;
+
+    for(int i = 1; i < 5; i++){
+        vector<int> vec = startend(-i,5-i,5,5-i,value);
+        if(!((vec[0] == 0) && (vec[1] == 0) && (vec[2] == 0) && (vec[3] == 0))){
+            cons_mark.push_back(vec[0]);
+            cons_mark.push_back(vec[1]);
+            cons_mark.push_back(vec[2]);
+            cons_mark.push_back(vec[3]);
+        }
+    }
+
+
+    vector<int> veco = startend(-4,0,4,0,value);
+    if(!((veco[0] == 0) && (veco[1] == 0) && (veco[2] == 0) && (veco[3] == 0))){
+        cons_mark.push_back(veco[0]);
+        cons_mark.push_back(veco[1]);
+        cons_mark.push_back(veco[2]);
+        cons_mark.push_back(veco[3]);
+    }
+
+    for(int i = 1; i < 5; i++){
+        vector<int> vec = startend(-5,-i,5,-i,value);
+        if(!((vec[0] == 0) && (vec[1] == 0) && (vec[2] == 0) && (vec[3] == 0))){
+            cons_mark.push_back(vec[0]);
+            cons_mark.push_back(vec[1]);
+            cons_mark.push_back(vec[2]);
+            cons_mark.push_back(vec[3]);
+        }
+    }
+
+    for(int i = 1; i < 5; i++){
+        vector<int> vec = startend(i-5,-5,i-5,i,value);
+        if(!((vec[0] == 0) && (vec[1] == 0) && (vec[2] == 0) && (vec[3] == 0))){
+            cons_mark.push_back(vec[0]);
+            cons_mark.push_back(vec[1]);
+            cons_mark.push_back(vec[2]);
+            cons_mark.push_back(vec[3]);
+        }
+    }
+
+
+    veco = startend(0,-4,0,4,value);
+    if(!((veco[0] == 0) && (veco[1] == 0) && (veco[2] == 0) && (veco[3] == 0))){
+        cons_mark.push_back(veco[0]);
+        cons_mark.push_back(veco[1]);
+        cons_mark.push_back(veco[2]);
+        cons_mark.push_back(veco[3]);
+    }
+
+    for(int i = 1; i < 5; i++){
+        vector<int> vec = startend(i,i-5,i,5,value);
+        if(!((vec[0] == 0) && (vec[1] == 0) && (vec[2] == 0) && (vec[3] == 0))){
+            cons_mark.push_back(vec[0]);
+            cons_mark.push_back(vec[1]);
+            cons_mark.push_back(vec[2]);
+            cons_mark.push_back(vec[3]);
+        }
+    }
+
+    for(int i = 1; i < 5; i++){
+        vector<int> vec = startend(-5,-i,i,5,value);
+        if(!((vec[0] == 0) && (vec[1] == 0) && (vec[2] == 0) && (vec[3] == 0))){
+            cons_mark.push_back(vec[0]);
+            cons_mark.push_back(vec[1]);
+            cons_mark.push_back(vec[2]);
+            cons_mark.push_back(vec[3]);
+        }
+    }
+
+
+    veco = startend(-4,-4,4,4,value);
+    if(!((veco[0] == 0) && (veco[1] == 0) && (veco[2] == 0) && (veco[3] == 0))){
+        cons_mark.push_back(veco[0]);
+        cons_mark.push_back(veco[1]);
+        cons_mark.push_back(veco[2]);
+        cons_mark.push_back(veco[3]);
+    }
+
+    for(int i = 1; i < 5; i++){
+        vector<int> vec = startend(i-5,-5,5,5-i,value);
+        if(!((vec[0] == 0) && (vec[1] == 0) && (vec[2] == 0) && (vec[3] == 0))){
+            cons_mark.push_back(vec[0]);
+            cons_mark.push_back(vec[1]);
+            cons_mark.push_back(vec[2]);
+            cons_mark.push_back(vec[3]);
+        }
+    }
+    if(cons_mark.size() == 0)cons_mark.push_back(0);
+
+    return cons_mark;
+
 }
 
 
