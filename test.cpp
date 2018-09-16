@@ -1,9 +1,9 @@
 #include<iostream>
 #include<vector>
 #include<string>
-#include <sstream>
-#include <fstream>
-#include <algorithm>
+#include<sstream>
+#include<fstream>
+#include<algorithm>
 
 using namespace std;
 
@@ -62,6 +62,7 @@ class Board{
         int rings_removed;  // total rings to be removed
         int ring1_removed;  // rings removed of player1 till now
         int ring2_removed;  // rings removed of player2 till now
+        int board_size;
 
     public:
 
@@ -70,17 +71,18 @@ class Board{
 
         vector<vector<int> > board_storage;
 
-        Board(int board_size, int m, int r){
+        Board(int b, int m, int r){
             vector<int> element;
-            for(int i = -board_size; i <= board_size; i++)
+            for(int i = -b; i <= b; i++)
                 element.push_back(0);
-            for(int i = -board_size; i <= board_size; i++)
+            for(int i = -b; i <= b; i++)
                 board_storage.push_back(element);
             
             element.clear();
 
-            rings_removed = r;
+            board_size = b;
             markers_removed = m;
+            rings_removed = r;
             ring1 = 0;
             ring2 = 0;
             marker1 = 0;
@@ -91,25 +93,27 @@ class Board{
 
         int get_position(int x, int y);
         void set_position(int x, int y, int value);
+        bool check_valid_position(int x, int y);
 
         vector<Move> get_move(string ply);
 
         vector<int> map_hex_mysys(int hexagon, int index); 
         vector<int> map_mysys_hex(int abscissa, int ordinate);
 
-        bool check_valid(Move mv, int player_index);
         void execute_move(vector<Move>, int player_index);
 
         void print_board();
         string print_position(int x, int y);
 
-        vector<Board> all_moves(int player_number);
-        // Board adjacent_move(int x, int y, Direction d);
-};
+        Board copy_board();
 
+        vector<Board> all_moves(int player_number);
+        Board adjacent_move(int x, int y, Direction d);
+};
 
 vector<Board> Board::all_moves(int player_number){
     vector<Board> possible_moves;
+    vector<vector<int> > player_rings;
 
     vector<Direction> directions;
     directions.push_back(Direction(0,1));
@@ -119,50 +123,95 @@ vector<Board> Board::all_moves(int player_number){
     directions.push_back(Direction(-1,-1));
     directions.push_back(Direction(-1,0));
 
-    
-    if()
+    if(player_number == -1){player_rings = player1_rings;}
+    else{player_rings = player2_rings;}
 
-    for(int r = 0; r < )
+    for(int r = 0; r < player_rings.size(); r++ ){
         for(int i = 0; i < directions.size(); i++){
-            int x2 = x + directions[i].xchange;
-            int y2 = y + directions[i].ychange;
-            if(x2=0){
-                if(y2 > -5 && y2 < 5){
-                    // possible_moves.push_back(adjacent_move(x))
+            
+            int x2 = player_rings[r][0] + directions[i].xchange;
+            int y2 = player_rings[r][1] + directions[i].ychange;
+
+            while(check_valid_position(x2, y2)){
+                if(get_position(x2,y2) == -2*player_number || get_position(x2,y2) == 2*player_number){break;}
+                else if(get_position(x2,y2) == 0){
+                    Board new_board = copy_board();
+                    vector<Move> new_moves;
+                    new_moves.push_back(Move("S", player_rings[r][0], player_rings[r][1]));
+                    new_moves.push_back(Move("M", x2, y2));
+                    new_board.execute_move(new_moves, player_number);
+                    possible_moves.push_back(new_board);
                 }
             }
-            // else if(x2=1){
-            // }
-
-            // else if(x2=2){
-
-            // }
-            // else if(x2=3){
-
-            // }
-            // else if(x2=4){
-
-            // }
-            // else if(x2=5){
-
-            // }
-            // else if(x2=-1){
-            // }
-
-            // else if(x2=-2){
-
-            // }
-            // else if(x2=-3){
-
-            // }
-            // else if(x=-4){
-
-            // }
-            // else if(x=-5){
-
-            // }
-            // possible_moves.push_back(adjacent_move(x,y,directions[i]));
         }
+    }
+}
+
+Board Board::copy_board(){
+
+    Board b = Board(board_size, markers_removed, rings_removed);
+    b.score = score;
+    b.ring1 = ring1;
+    b.ring2 = ring2;
+    b.marker1 = marker1;
+    b.marker2= marker2;
+    b.ring1_removed = ring1_removed;
+    b.ring2_removed = ring2_removed;
+
+    b.player1_rings = player1_rings;
+    b.player2_rings = player2_rings;
+    b.board_storage = board_storage;
+    return(b);
+}
+
+bool Board::check_valid_position(int x, int y){
+
+    if(x = 0){
+        if(y >= -4 && y <= 4){ return true;}
+        else{return false;}
+    }
+
+    else if(x = 1){
+        if(y >= -4 && y <= 5){ return true;}
+        else{return false;}
+    }
+    else if(x = 2){
+        if(y >= -3 && y <= 5){ return true;}
+        else{return false;}
+    }
+    else if(x = 3){
+        if(y >= -2 && y <= 5){ return true;}
+        else{return false;}
+    }
+    else if(x = 4){
+        if(y >= -1 && y <= 5){ return true;}
+        else{return false;}
+    }
+    else if(x = 5){
+        if(y >= 1 && y <= 4){ return true;}
+        else{return false;}
+    }
+
+    else if(x = -1){
+        if(y >= -5 && y <= 4){ return true;}
+        else{return false;}
+    }
+    else if(x = -2){
+        if(y >= -5 && y <= 3){ return true;}
+        else{return false;}
+    }
+    else if(x = -3){
+        if(y >= -5 && y <= 2){ return true;}
+        else{return false;}
+    }
+    else if(x = -4){
+        if(y >= -5 && y <= 1){ return true;}
+        else{return false;}
+    }
+    else if(x=-5){
+        if(y >= -4 && y <= -1){ return true;}
+        else{return false;}
+    }
 }
 
 vector<Move> Board::get_move(string ply){
