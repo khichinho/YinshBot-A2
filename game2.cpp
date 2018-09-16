@@ -4,6 +4,7 @@
 #include<sstream>
 #include<fstream>
 #include<algorithm>
+// #include<utility> 
 
 using namespace std;
 
@@ -127,30 +128,18 @@ class Board{
 
         Board copy_board();
 
-
         vector<int> startend(int s1, int f1, int s2, int f2, int value);
         vector<int> cons_marker(int value);
 
-        vector<Board> all_moves(int player_number);
+        vector<pair<Board, vector<Move> > > all_moves(int player_number);
         Board adjacent_move(int x, int y, Direction d);
 
-        vector<vector<int> > get_player_rings(int get_player_rings);
+        vector<pair<Board, vector<Move> > > next_move(int player_number);
 };
 
-class Bot{
-    private:
-        Board state;
-        vector<Move> bot_move;
-    public:
-        Bot(Board b, vector<Move> m){
-            state = b;
-            bot_move = m;
-        }
-};
-
-vector<Board> Board::all_moves(int player_number){
+vector<pair<Board, vector<Move> > > Board::all_moves(int player_number){
     
-    vector<Board> possible_moves;
+    vector<pair<Board, vector<Move> > > possible_moves;
     vector<vector<int> > player_rings;
 
     vector<Direction> directions;
@@ -178,7 +167,8 @@ vector<Board> Board::all_moves(int player_number){
                     new_moves.push_back(Move("S",player_rings[r][0],player_rings[r][1]));
                     new_moves.push_back(Move("M",x2,y2));
                     new_board.execute_move(new_moves,player_number);
-                    possible_moves.push_back(new_board);
+                    pair<Board,vector<Move> > bmpair(new_board,new_moves);
+                    possible_moves.push_back(bmpair);
                 }
 
                 x2 += directions[i].xchange;
@@ -189,13 +179,36 @@ vector<Board> Board::all_moves(int player_number){
     return possible_moves;
 }
 
-vector<vector<int> > Board::get_player_rings(int player_number){
-    if(player_number == -1){
-        return player1_rings;
-    }
-    else{
-        return player2_rings;
-    }
+vector<pair<Board, vector<Move> > > Board::next_move(int player_number){
+
+    vector<pair<Board, vector<Move> > > after_sm = all_moves(player_number);
+
+    for(int i=0; i < after_sm.size(); i++){
+        vector<int> remove_markers = after_sm[i].first.cons_marker(player_number);
+
+    //     while(remove_markers.size() > 1){
+    //         Move rs("RS",remove_markers[0],remove_markers[1]);
+    //         Move re("RE",remove_markers[2],remove_markers[3]);
+
+    //         vector<vector<int> > player_rings;
+    //         if(player_number == -1) { player_rings = after_sm[i].first.player1_rings;}
+    //         else if(player_number == 1){ player_rings = after_sm[i].first.player2_rings;}
+
+    //         for(int j = 0; j < player_rings.size(); j++){
+    //             Move x("X",player_rings[j][0],player_rings[j][1]);
+    //             vector<Move> rsrex;
+    //             rsrex.push_back(rs);
+    //             rsrex.push_back(re);
+    //             rsrex.push_back(x);
+
+    //             after_sm[i].first.execute_move(rsrex,player_number);
+    //             after_sm[i].second.insert(after_sm[i].second.end(),rsrex.begin(),rsrex.end());
+    //         }
+    //         vector<int> remove_markers = after_sm[i].first.cons_marker(player_number);
+    //     }
+    // }
+
+    return after_sm;
 }
 
 Board Board::copy_board(){
@@ -761,21 +774,16 @@ int main(){
         player_number *= -1;
     }
 
-    vector<int> v = my_board.cons_marker(-1);
-    for(int i = 0; i< v.size(); i++){ cout << v[i] << endl;} 
+    cout << "PRINTING ALL POSSIBLE MOVES -"<<endl;
+    cout << "PRINTING ALL POSSIBLE MOVES -"<<endl<<endl;
 
 
+    vector<pair<Board,vector<Move> > > test;
+    test = my_board.next_move(-1);
 
-    // cout << "PRINTING ALL POSSIBLE MOVES -"<<endl;
-    // cout << "PRINTING ALL POSSIBLE MOVES -"<<endl<<endl;
-
-
-    // vector<Board> test;
-    // test = my_board.all_moves(-1);
-
-    // for(int i = 0; i < test.size(); i++){
-    //     test[i].print_board();
-    // }
+    for(int i = 0; i < test.size(); i++){
+        test[i].first.print_board();
+    }
 
 ///////////////////////////////DEBUG
     // vector<Board> possible_moves;
