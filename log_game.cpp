@@ -189,13 +189,9 @@ vector<pair<Board, vector<Move> > > Board::all_moves(int player_number){
                 int x2 = player_rings[r][0] + directions[i].xchange;
                 int y2 = player_rings[r][1] + directions[i].ychange;
 
-                bool over_marker = true;
-                bool over_marker_position = true;
-
                 while(check_valid_position(x2,y2)){
                     if(get_position(x2,y2) == -2*player_number || get_position(x2,y2) == 2*player_number){break;}
-                    if(get_position(x2,y2) == -1*player_number || get_position(x2,y2) == player_number){over_marker = false;}
-                    else if(get_position(x2,y2) == 0 && over_marker && over_marker_position){
+                    else if(get_position(x2,y2) == 0){
                         Board new_board = copy_board();
                         vector<Move> new_moves;
                         new_moves.push_back(Move("S",player_rings[r][0],player_rings[r][1]));
@@ -203,7 +199,6 @@ vector<pair<Board, vector<Move> > > Board::all_moves(int player_number){
                         new_board.execute_move(new_moves,player_number);
                         pair<Board,vector<Move> > bmpair(new_board,new_moves);
                         possible_moves.push_back(bmpair);
-                        over_marker_position = false;
                     }
 
                     x2 += directions[i].xchange;
@@ -235,49 +230,45 @@ vector<pair<Board, vector<Move> > > Board::all_moves(int player_number){
 
 vector<pair<Board, vector<Move> > > Board::next_move(int player_number){
 
-    vector<int> check_for_x = cons_marker(player_number);
+    vector<pair<Board, vector<Move> > > after_sm = all_moves(player_number);
     
-    if(check_for_x.size() == 1){
-        vector<pair<Board, vector<Move> > > after_sm = all_moves(player_number);
-        
-        vector<pair<Board, vector<Move> > > complete_moves;
+    vector<pair<Board, vector<Move> > > complete_moves;
 
-        for(int i=0; i < after_sm.size(); i++){
-            vector<int> remove_markers = after_sm[i].first.cons_marker(player_number);
+    for(int i=0; i < after_sm.size(); i++){
+        vector<int> remove_markers = after_sm[i].first.cons_marker(player_number);
 
-            if(remove_markers.size() > 1){
-                Move rs("RS",remove_markers[0],remove_markers[1]);
-                Move re("RE",remove_markers[2],remove_markers[3]);
+        if(remove_markers.size() > 1){
+            Move rs("RS",remove_markers[0],remove_markers[1]);
+            Move re("RE",remove_markers[2],remove_markers[3]);
 
-                vector<vector<int> > player_rings;
-                if(player_number == -1) { player_rings = after_sm[i].first.player1_rings;}
-                else if(player_number == 1){ player_rings = after_sm[i].first.player2_rings;}
+            vector<vector<int> > player_rings;
+            if(player_number == -1) { player_rings = after_sm[i].first.player1_rings;}
+            else if(player_number == 1){ player_rings = after_sm[i].first.player2_rings;}
 
-                for(int j = 0; j < player_rings.size(); j++){
-                    Move x("X",player_rings[j][0],player_rings[j][1]);
-                    vector<Move> rsrex;
-                    rsrex.push_back(rs);
-                    rsrex.push_back(re);
-                    rsrex.push_back(x);
+            for(int j = 0; j < player_rings.size(); j++){
+                Move x("X",player_rings[j][0],player_rings[j][1]);
+                vector<Move> rsrex;
+                rsrex.push_back(rs);
+                rsrex.push_back(re);
+                rsrex.push_back(x);
 
-                    Board after_sm_board = after_sm[i].first.copy_board();
-                    vector<Move>after_sm_move = after_sm[i].second;
+                Board after_sm_board = after_sm[i].first.copy_board();
+                vector<Move>after_sm_move = after_sm[i].second;
 
-                    after_sm_board.execute_move(rsrex,player_number);
-                    after_sm_move.insert(after_sm_move.end(),rsrex.begin(),rsrex.end());
+                after_sm_board.execute_move(rsrex,player_number);
+                after_sm_move.insert(after_sm_move.end(),rsrex.begin(),rsrex.end());
 
-                    pair<Board,vector<Move> > after_x_pair(after_sm_board, after_sm_move);
-                    
-                    complete_moves.push_back(after_x_pair);
-                }
-            }
-            else{
-                complete_moves.push_back(after_sm[i]);
+                pair<Board,vector<Move> > after_x_pair(after_sm_board, after_sm_move);
+                
+                complete_moves.push_back(after_x_pair);
             }
         }
-
-        return complete_moves;
+        else{
+            complete_moves.push_back(after_sm[i]);
+        }
     }
+
+    return complete_moves;
 }
 
 pair<Board, vector<Move> > Board::bot_move(int player_number, int depth){
@@ -1015,22 +1006,22 @@ void Board::print_board(){
 }
 
 int main(){
-    // ifstream infile("thefile.txt");
-    // string line;
-    // Board my_board = Board(5,5,3);
-    // int player_number = -1;
-    // my_board.print_board();
+    ifstream infile("log.txt");
+    string line;
+    Board my_board = Board(5,5,3);
+    int player_number = -1;
+    my_board.print_board();
 
 //////////////// FILE INPUT////////
-    // while (getline(infile, line))
-    // {
-    //     if(player_number == -1){ cout<<"Player 1 moves : ";}
-    //     else{cout<<"Player 2 moves : ";}
-    //     vector<Move> movvllist = my_board.get_move(line);
-    //     my_board.execute_move(movvllist, player_number);
-    //     my_board.print_board();
-    //     player_number *= -1;
-    // }
+    while (getline(infile, line))
+    {
+        if(player_number == -1){ cout<<"Player 1 moves : ";}
+        else{cout<<"Player 2 moves : ";}
+        vector<Move> movvllist = my_board.get_move(line);
+        my_board.execute_move(movvllist, player_number);
+        my_board.print_board();
+        player_number *= -1;
+    }
 ///////////////////////////////////
 
 //////////////// BOT///////////////
@@ -1112,64 +1103,56 @@ int main(){
 ///////////////////////////////////
 
 //////////////// SERVER ///////////
-    string game_data;
-    getline(cin, game_data);
+    // string game_data;
+    // getline(cin, game_data);
 
-    vector<string> game_data_vector;
+    // vector<string> game_data_vector;
 
-    stringstream data(game_data);
-    string line;
+    // stringstream data(game_data);
+    // string line;
 
-    while(getline(data,line,' ')){
-        game_data_vector.push_back(line);
-    }
+    // while(getline(data,line,' ')){
+    //     game_data_vector.push_back(line);
+    // }
 
-    int player_number;
+    // int player_number;
 
-    if(stoi(game_data_vector[0]) == 1){ player_number = -1;}
-    else{player_number = 1;}
+    // if(stoi(game_data_vector[0]) == 1){ player_number = -1;}
+    // else{player_number = 1;}
     
-    int number_of_rings = stoi(game_data_vector[1]);
-    int game_time = stoi(game_data_vector[2]);
+    // int number_of_rings = stoi(game_data_vector[1]);
+    // int game_time = stoi(game_data_vector[2]);
 
-    Board my_board = Board(5,number_of_rings,3);
-
-    ofstream ofs;
-    ofs.open("log.txt", ofstream::out | ofstream::trunc);
-    ofs.close();
-
-    ofstream myfile;
-    myfile.open ("log.txt",ios::app);
-    string opponent_move;
+    // Board my_board = Board(5,number_of_rings,3);
 
 
+    // ofstream myfile;
+    // myfile.open ("log.txt",ios::app);
+    // string opponent_move;
 
+    // if(player_number = 1){
+    //     getline(cin, opponent_move);
+    //     vector<Move> op_move_list = my_board.get_move(opponent_move);
+    //     myfile << opponent_move <<"\n";
+    //     my_board.execute_move(op_move_list, -1);
+    // }
 
+    // myfile.close();
 
+    // while(true){
+    //     myfile.open ("log.txt",ios::app);
+    //     pair<Board, vector<Move> > my_move = my_board.bot_move(player_number,1);
+    //     my_board.execute_move(my_move.second,player_number);
+    //     cout << my_board.server_output(my_move) <<endl;
+    //     myfile << my_board.server_output(my_move) << "\n";
 
-    if(player_number == 1){
-        getline(cin, opponent_move);
-        vector<Move> op_move_list = my_board.get_move(opponent_move);
-        myfile << opponent_move <<"\n";
-        my_board.execute_move(op_move_list, -1);
-    }
+    //     getline(cin, opponent_move);
+    //     vector<Move> op_move_list = my_board.get_move(opponent_move);
+    //     myfile << opponent_move <<"\n";
+    //     my_board.execute_move(op_move_list, -1*player_number);
 
-    myfile.close();
-
-    while(true){
-        myfile.open ("log.txt",ios::app);
-        pair<Board, vector<Move> > my_move = my_board.bot_move(player_number,1);
-        my_board.execute_move(my_move.second,player_number);
-        cout << my_board.server_output(my_move) <<endl;
-        myfile << my_board.server_output(my_move) << "\n";
-
-        getline(cin, opponent_move);
-        vector<Move> op_move_list = my_board.get_move(opponent_move);
-        myfile << opponent_move <<"\n";
-        my_board.execute_move(op_move_list, -1*player_number);
-
-        myfile.close();
-    }
+    //     myfile.close();
+    // }
 ///////////////////////////////////
     return(1);
 }
