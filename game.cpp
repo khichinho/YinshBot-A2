@@ -110,19 +110,6 @@ public:
     vector<vector<int> > board_storage;
 
     Board(int board_size, int m, int r) {
-        // vector<int> el;
-        // for(int i = 0; i < board_size; i++){
-        //     el.push_back(0);
-        // }
-        // for(int i = 0; i <= board_size; i++){
-        //     el.push_back(0);
-        //     board_storage.push_back(el);            
-        // }
-        // for(int i = 0; i < board_size; i++){
-        //     el.pop_back();
-        //     board_storage.push_back(el);
-        // }
-
         
         vector<int> element;
         for(int i = -board_size; i <= board_size; i++)
@@ -187,6 +174,12 @@ public:
     int board_marker(int value);
 
     int heuristics(int player_index);
+
+    vector<int> place_position(int player_index);
+
+    bool check_valid_position(int x, int y);
+
+    bool check_dir(int x1, int y1, int x2, int y2);
 };
 
 int Board::getring1()
@@ -629,6 +622,60 @@ void Board::execute_move(vector<Move> movelist, int player_index){
     }
 }
 
+bool Board::check_valid_position(int x, int y){
+
+    if(x == 0){
+        if(y >= -4 && y <= 4){ return true;}
+        else{return false;}
+    }
+
+    else if(x == 1){
+        if(y >= -4 && y <= 5){ return true;}
+        else{return false;}
+    }
+    else if(x == 2){
+        if(y >= -3 && y <= 5){ return true;}
+        else{return false;}
+    }
+    else if(x == 3){
+        if(y >= -2 && y <= 5){ return true;}
+        else{return false;}
+    }
+    else if(x == 4){
+        if(y >= -1 && y <= 5){ return true;}
+        else{return false;}
+    }
+    else if(x == 5){
+        if(y >= 1 && y <= 4){ return true;}
+        else{return false;}
+    }
+
+    else if(x == -1){
+        if(y >= -5 && y <= 4){ return true;}
+        else{return false;}
+    }
+    else if(x == -2){
+        if(y >= -5 && y <= 3){ return true;}
+        else{return false;}
+    }
+    else if(x == -3){
+        if(y >= -5 && y <= 2){ return true;}
+        else{return false;}
+    }
+    else if(x == -4){
+        if(y >= -5 && y <= 1){ return true;}
+        else{return false;}
+    }
+    else if(x == -5){
+        if(y >= -4 && y <= -1){ return true;}
+        else{return false;}
+    }
+
+    else{
+        return false;
+    }
+}
+
 void Board::print_board(){
 
     cout << "   " << "     " << " " << "     " << " " << " " << endl;
@@ -849,6 +896,61 @@ int Board::heuristics(int p){
     else score += 100*(ring2_removed - ring1_removed);
 }
 
+bool Board::check_dir(int x1, int y1, int x2, int y2){
+    if((x1 == x2) || (y1 == y2) || (x1-x2 == y1-y2))return true;
+    return false;
+}
+
+vector<int> Board::place_position(int player_index){
+    vector<int> direction {0,1,0,-1,1,0,-1,0,1,1,-1,-1};
+    vector<int> place;
+    vector<vector<int> > player_rings;
+    vector<vector<int> > opponent_rings;
+    if(player_index == -1){
+        player_rings = player1_rings;
+        opponent_rings = player2_rings;
+    }
+    else{
+        player_rings = player2_rings;
+        opponent_rings = player1_rings;
+    }
+
+
+    if(player_index == -1){
+    int n = opponent_rings.size();
+    int arr[n];
+    for(int i = 0; i < n; ++i)
+        arr[i] = i;
+    random_shuffle(arr, arr+n);
+        for(int i = 0; i < opponent_rings.size(); i++){
+            int x = opponent_rings[arr[i]][0];
+            int y = opponent_rings[arr[i]][1];
+            for(int j = 0; j < 6; i++){
+                int xnew = x+direction[2*j];
+                int ynew = y+direction[2*j+1];
+                int flag = 0;
+                if(check_valid_position(xnew,ynew)){
+                    if(getpositionValue(xnew,ynew) == 0){
+                        for(int k = 0; k < player_rings.size(); k++){
+                            if(check_dir(xnew, ynew, player_rings[k][0], player_rings[k][1]) == true){
+                                flag = 1;
+                                break;
+                            }
+                        }
+                        if(flag == 1){
+                            place.push_back(xnew);
+                            place.push_back(ynew);
+                            return place;
+                        }
+                    }
+                }
+            }   
+        }
+    }
+}
+
+
+
 
 int main(){
     // Board myBoard = Board(5,5,3);
@@ -915,6 +1017,7 @@ int main(){
 
     return 1;
 }
+
 
 
 
