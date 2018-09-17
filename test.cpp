@@ -137,8 +137,13 @@ class Board{
 
         vector<pair<Board, vector<Move> > > next_move(int player_number);
 
-        int heuristic();
+        int row_marker(int x1, int y1, int x2, int y2, int value);
 
+        int board_marker(int value);
+
+        int heuristics(int player);
+
+        int heuristic();
         pair<Board, vector<Move> > bot_move(int player_number, int depth);
 };
 
@@ -812,8 +817,119 @@ void Board::execute_move(vector<Move> movelist, int player_index){
     }
 }
 
-int Board::heuristic(){
-    return( (-1*marker1) + marker2 + (-100*ring1) + 100*ring2); 
+int Board::row_marker(int x1, int y1, int x2, int y2, int value){
+    int x = x2 - x1;
+    int y = y2 - y1;
+    int size = max(x,y);
+    if(x != 0)x = 1;
+    if(y != 0)y = 1;
+    int check = 0;
+    int firstx, firsty,lastx,lasty;
+    int sum = 0;
+    for(int i = 0; i <= size; i++){
+        int xcurr = x1+i*x;
+        int ycurr = y1+i*y;
+        if(check==0){
+            if(get_position(xcurr,ycurr) == value){
+                firstx = xcurr;
+                firsty = ycurr;
+                check = 1;
+            }
+        }
+        if(check==1){
+            if(get_position(xcurr,ycurr) == value){
+                lastx = xcurr;
+                lasty = ycurr;
+                if((xcurr == x2) && (ycurr == y2)){
+                    int el = max((x2-firstx+1),(y2-firsty+1));
+                    sum = sum + (int)pow(el,3.0);
+                }
+                
+            }
+            else if(get_position(xcurr,ycurr) != value){
+                check = 0;
+                int el = max(xcurr-firstx,ycurr-firsty);
+                sum = sum + (int)pow(el,3.0);
+                //ls.push_back(max(xcurr-firstx,ycurr-firsty));
+            }
+        }
+    }
+    return sum;
+}
+
+int Board::board_marker(int value){
+    int sum = 0;
+
+    int veco = row_marker(1,5,4,5,value);
+    sum += veco;
+
+    for(int i = 1; i < 5; i++){
+        int vec = row_marker(-i,5-i,5,5-i,value);
+        sum += vec;    
+    }
+
+    veco = row_marker(-4,0,4,0,value);
+    sum += veco;
+
+    for(int i = 1; i < 5; i++){
+        int vec = row_marker(-5,-i,5-i,-i,value);
+        sum += vec;
+    }
+
+    veco = row_marker(-4,-5,-1,-5,value);
+    sum += veco;
+
+//////////////////////////
+
+    veco = row_marker(-5,-4,-5,-1,value);
+    sum += veco;
+
+    for(int i = 1; i < 5; i++){
+        int vec = row_marker(i-5,-5,i-5,i,value);
+        sum += vec;
+    }
+
+    veco = row_marker(0,-4,0,4,value);
+    sum += veco;
+
+    for(int i = 1; i < 5; i++){
+        int vec = row_marker(i,i-5,i,5,value);
+        sum += vec;
+    }
+    
+    veco = row_marker(5,1,5,4,value);
+    sum += veco;
+
+//////////////////////////
+
+    veco = row_marker(-4,1,-1,4,value);
+    sum += veco;
+
+    for(int i = 1; i < 5; i++){
+        int vec = row_marker(-5,-i,i,5,value);
+        sum += vec;
+    }
+
+    veco = row_marker(-4,-4,4,4,value);
+    sum += veco;
+
+    for(int i = 1; i < 5; i++){
+        int vec = row_marker(i-5,-5,5,5-i,value);
+        sum += vec;
+    }
+
+    veco = row_marker(1,-4,4,-1,value);
+    sum += veco;
+
+    return sum;
+
+}
+
+int Board::heuristics(int p){
+    int score = board_marker(p) - board_marker(-p);
+    if(p == -1)
+        score += 100*(ring1_removed - ring2_removed);
+    else score += 100*(ring2_removed - ring1_removed);
 }
 
 void Board::print_board(){
