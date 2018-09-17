@@ -4,7 +4,7 @@
 #include<sstream>
 #include<fstream>
 #include<algorithm>
-// #include<utility> 
+#include<utility> 
 
 using namespace std;
 
@@ -59,7 +59,7 @@ class Board{
         int ring2;
         int marker1;
         int marker2;
-        int markers_removed;    // number of markers, can be removed in one step
+        int markers_removed;  // number of markers, can be removed in one step
         int rings_removed;  // total rings to be removed
         int ring1_removed;  // rings removed of player1 till now
         int ring2_removed;  // rings removed of player2 till now
@@ -129,12 +129,17 @@ class Board{
         Board copy_board();
 
         vector<int> startend(int s1, int f1, int s2, int f2, int value);
+        vector<int> moves_row(vector<int> ls);
         vector<int> cons_marker(int value);
 
         vector<pair<Board, vector<Move> > > all_moves(int player_number);
         Board adjacent_move(int x, int y, Direction d);
 
         vector<pair<Board, vector<Move> > > next_move(int player_number);
+
+        int heuristic();
+
+        pair<Board, vector<Move> > bot_move(int player_number, int depth);
 };
 
 vector<pair<Board, vector<Move> > > Board::all_moves(int player_number){
@@ -182,33 +187,109 @@ vector<pair<Board, vector<Move> > > Board::all_moves(int player_number){
 vector<pair<Board, vector<Move> > > Board::next_move(int player_number){
 
     vector<pair<Board, vector<Move> > > after_sm = all_moves(player_number);
+    
+    vector<pair<Board, vector<Move> > > complete_moves;
 
     for(int i=0; i < after_sm.size(); i++){
         vector<int> remove_markers = after_sm[i].first.cons_marker(player_number);
 
-    //     while(remove_markers.size() > 1){
-    //         Move rs("RS",remove_markers[0],remove_markers[1]);
-    //         Move re("RE",remove_markers[2],remove_markers[3]);
+        if(remove_markers.size() > 1){
+            Move rs("RS",remove_markers[0],remove_markers[1]);
+            Move re("RE",remove_markers[2],remove_markers[3]);
 
-    //         vector<vector<int> > player_rings;
-    //         if(player_number == -1) { player_rings = after_sm[i].first.player1_rings;}
-    //         else if(player_number == 1){ player_rings = after_sm[i].first.player2_rings;}
+            vector<vector<int> > player_rings;
+            if(player_number == -1) { player_rings = after_sm[i].first.player1_rings;}
+            else if(player_number == 1){ player_rings = after_sm[i].first.player2_rings;}
 
-    //         for(int j = 0; j < player_rings.size(); j++){
-    //             Move x("X",player_rings[j][0],player_rings[j][1]);
-    //             vector<Move> rsrex;
-    //             rsrex.push_back(rs);
-    //             rsrex.push_back(re);
-    //             rsrex.push_back(x);
+            for(int j = 0; j < player_rings.size(); j++){
+                Move x("X",player_rings[j][0],player_rings[j][1]);
+                vector<Move> rsrex;
+                rsrex.push_back(rs);
+                rsrex.push_back(re);
+                rsrex.push_back(x);
 
-    //             after_sm[i].first.execute_move(rsrex,player_number);
-    //             after_sm[i].second.insert(after_sm[i].second.end(),rsrex.begin(),rsrex.end());
-    //         }
-    //         vector<int> remove_markers = after_sm[i].first.cons_marker(player_number);
-    //     }
-    // }
+                Board after_sm_board = after_sm[i].first.copy_board();
+                vector<Move>after_sm_move = after_sm[i].second;
 
-    return after_sm;
+                after_sm_board.execute_move(rsrex,player_number);
+                after_sm_move.insert(after_sm_move.end(),rsrex.begin(),rsrex.end());
+
+                pair<Board,vector<Move> > after_x_pair(after_sm_board, after_sm_move);
+                
+                complete_moves.push_back(after_x_pair);
+            }
+        }
+        else{
+            complete_moves.push_back(after_sm[i]);
+        }
+    }
+
+    return complete_moves;
+}
+
+pair<Board, vector<Move> > Board::bot_move(int player_number, int depth){
+///////////////////////////Level 2
+    vector<pair<Board, vector<Move> > > calculated_moves = next_move(player_number);
+
+    int h;
+    if(player_number == -1){h = 10000;}
+    else if(player_number == 1){h = -10000;}
+
+    pair<Board, vector<Move> > move_to_play;
+
+    if(depth = 1){
+        if(player_number == -1){
+            for(int i = 0; i< calculated_moves.size(); i++){
+                if(calculated_moves[i].first.heuristic() < h){
+                    move_to_play.first = calculated_moves[i].first.copy_board();
+                    move_to_play.second = calculated_moves[i].second;
+                    h = calculated_moves[i].first.heuristic();
+                }
+            }
+        }
+        else if(player_number == 1){
+            for(int i = 0; i< calculated_moves.size(); i++){
+                if(calculated_moves[i].first.heuristic() > h){
+                    move_to_play.first = calculated_moves[i].first.copy_board();
+                    move_to_play.second = calculated_moves[i].second;
+                    h = calculated_moves[i].first.heuristic();
+                }
+            }
+        }
+    }
+    else if(depth > 1){
+        if(player_number == -1){
+            vector<pair<Board, vector<Move> > > depth_moves;
+            for(int i = 0; i< calculated_moves.size(); i++){
+                pair<Board, vector<Move> > move_in_depth = calculated_moves[i].first.bot_move(-1*player_number,depth-1);
+                depth_moves.push_back(move_in_depth);
+            }
+            for(int i = 0; i< depth_moves.size(); i++){
+                if(depth_moves[i].first.heuristic() < h){
+                    move_to_play.first = depth_moves[i].first.copy_board();
+                    move_to_play.second = depth_moves[i].second;
+                    h = depth_moves[i].first.heuristic();
+                }
+            }
+        }
+        if(player_number == 1){
+            vector<pair<Board, vector<Move> > > depth_moves;
+            for(int i = 0; i< calculated_moves.size(); i++){
+                pair<Board, vector<Move> > move_in_depth = calculated_moves[i].first.bot_move(-1*player_number,depth-1);
+                depth_moves.push_back(move_in_depth);
+            }
+            for(int i = 0; i< depth_moves.size(); i++){
+                if(depth_moves[i].first.heuristic() > h){
+                    move_to_play.first = depth_moves[i].first.copy_board();
+                    move_to_play.second = depth_moves[i].second;
+                    h = depth_moves[i].first.heuristic();
+                }
+            }
+        }
+    }
+    return move_to_play;
+
+///////////////////////////
 }
 
 Board Board::copy_board(){
@@ -501,104 +582,107 @@ vector<int> Board::startend(int x1, int y1, int x2, int y2, int value){
                         ls[0] = firstx;ls[1] = firsty; ls[2] = lastx; ls[3] = lasty;
                     }
                 }
+                                
             }
         }
     }
     return ls;
 }
 
+vector<int> Board::moves_row(vector<int> ls){
+	vector<int> vec;
+	if(!((ls[0] == 0) && (ls[1] == 0) && (ls[2] == 0) && (ls[3] == 0))){
+		int x = ls[2] - ls[0];
+		int y = ls[3] - ls[1];
+		int size = max(x,y)+1;
+		if(x != 0)x=1;
+		if(y != 0)y=1;
+		for(int i = 0; i <= size-5; i++){
+			vec.push_back(ls[0]+i*x);
+			vec.push_back(ls[1]+i*y);
+			vec.push_back(ls[0]+(i+4)*x);
+			vec.push_back(ls[1]+(i+4)*y);
+		}
+	}
+	else vec.push_back(0);
+	return vec;
+}
+
 vector<int> Board::cons_marker(int value){
     vector<int> cons_mark;
 
     for(int i = 1; i < 5; i++){
-        vector<int> vec = startend(-i,5-i,5,5-i,value);
-        if(!((vec[0] == 0) && (vec[1] == 0) && (vec[2] == 0) && (vec[3] == 0))){
-            cons_mark.push_back(vec[0]);
-            cons_mark.push_back(vec[1]);
-            cons_mark.push_back(vec[2]);
-            cons_mark.push_back(vec[3]);
+        vector<int> vec = moves_row(startend(-i,5-i,5,5-i,value));
+        if(vec.size() != 1){
+			for(int j = 0;j < vec.size(); j++)
+				cons_mark.push_back(vec[j]);
         }
     }
 
 
-    vector<int> veco = startend(-4,0,4,0,value);
-    if(!((veco[0] == 0) && (veco[1] == 0) && (veco[2] == 0) && (veco[3] == 0))){
-        cons_mark.push_back(veco[0]);
-        cons_mark.push_back(veco[1]);
-        cons_mark.push_back(veco[2]);
-        cons_mark.push_back(veco[3]);
+    vector<int> veco = moves_row(startend(-4,0,4,0,value));
+    if(veco.size() != 1){
+        for(int j = 0;j < veco.size(); j++)
+            cons_mark.push_back(veco[j]);
     }
 
     for(int i = 1; i < 5; i++){
-        vector<int> vec = startend(-5,-i,5,-i,value);
-        if(!((vec[0] == 0) && (vec[1] == 0) && (vec[2] == 0) && (vec[3] == 0))){
-            cons_mark.push_back(vec[0]);
-            cons_mark.push_back(vec[1]);
-            cons_mark.push_back(vec[2]);
-            cons_mark.push_back(vec[3]);
+        vector<int> vec = moves_row(startend(-5,-i,5,-i,value));
+        if(vec.size() != 1){
+            for(int j = 0;j < vec.size(); j++)
+               cons_mark.push_back(vec[j]);
         }
     }
 
     for(int i = 1; i < 5; i++){
-        vector<int> vec = startend(i-5,-5,i-5,i,value);
-        if(!((vec[0] == 0) && (vec[1] == 0) && (vec[2] == 0) && (vec[3] == 0))){
-            cons_mark.push_back(vec[0]);
-            cons_mark.push_back(vec[1]);
-            cons_mark.push_back(vec[2]);
-            cons_mark.push_back(vec[3]);
+        vector<int> vec = moves_row(startend(i-5,-5,i-5,i,value));
+        if(vec.size() != 1){
+            for(int j = 0;j < vec.size(); j++)
+                cons_mark.push_back(vec[j]);
         }
     }
 
 
-    veco = startend(0,-4,0,4,value);
-    if(!((veco[0] == 0) && (veco[1] == 0) && (veco[2] == 0) && (veco[3] == 0))){
-        cons_mark.push_back(veco[0]);
-        cons_mark.push_back(veco[1]);
-        cons_mark.push_back(veco[2]);
-        cons_mark.push_back(veco[3]);
+    veco = moves_row(startend(0,-4,0,4,value));
+    if(veco.size() != 1){
+        for(int j = 0;j < veco.size(); j++)
+            cons_mark.push_back(veco[j]);
     }
 
     for(int i = 1; i < 5; i++){
-        vector<int> vec = startend(i,i-5,i,5,value);
-        if(!((vec[0] == 0) && (vec[1] == 0) && (vec[2] == 0) && (vec[3] == 0))){
-            cons_mark.push_back(vec[0]);
-            cons_mark.push_back(vec[1]);
-            cons_mark.push_back(vec[2]);
-            cons_mark.push_back(vec[3]);
+        vector<int> vec = moves_row(startend(i,i-5,i,5,value));
+        if(vec.size() != 1){
+            for(int j = 0;j < vec.size(); j++)
+            cons_mark.push_back(vec[j]);
         }
     }
 
     for(int i = 1; i < 5; i++){
-        vector<int> vec = startend(-5,-i,i,5,value);
-        if(!((vec[0] == 0) && (vec[1] == 0) && (vec[2] == 0) && (vec[3] == 0))){
-            cons_mark.push_back(vec[0]);
-            cons_mark.push_back(vec[1]);
-            cons_mark.push_back(vec[2]);
-            cons_mark.push_back(vec[3]);
+        vector<int> vec = moves_row(startend(-5,-i,i,5,value));
+        if(vec.size() != 1){
+            for(int j = 0;j < vec.size(); j++)
+            cons_mark.push_back(vec[j]);
         }
     }
 
 
-    veco = startend(-4,-4,4,4,value);
-    if(!((veco[0] == 0) && (veco[1] == 0) && (veco[2] == 0) && (veco[3] == 0))){
-        cons_mark.push_back(veco[0]);
-        cons_mark.push_back(veco[1]);
-        cons_mark.push_back(veco[2]);
-        cons_mark.push_back(veco[3]);
+    veco = moves_row(startend(-4,-4,4,4,value));
+    if(veco.size() != 1){
+        for(int j = 0;j < veco.size(); j++)
+            cons_mark.push_back(veco[j]);
     }
 
     for(int i = 1; i < 5; i++){
-        vector<int> vec = startend(i-5,-5,5,5-i,value);
-        if(!((vec[0] == 0) && (vec[1] == 0) && (vec[2] == 0) && (vec[3] == 0))){
-            cons_mark.push_back(vec[0]);
-            cons_mark.push_back(vec[1]);
-            cons_mark.push_back(vec[2]);
-            cons_mark.push_back(vec[3]);
+        vector<int> vec = moves_row(startend(i-5,-5,5,5-i,value));
+        if(vec.size() != 1){
+            for(int j = 0;j < vec.size(); j++)
+                cons_mark.push_back(vec[j]);
         }
     }
     if(cons_mark.size() == 0)cons_mark.push_back(0);
 
     return cons_mark;
+
 }
 
 void Board::execute_move(vector<Move> movelist, int player_index){
@@ -728,6 +812,10 @@ void Board::execute_move(vector<Move> movelist, int player_index){
     }
 }
 
+int Board::heuristic(){
+    return( (-1*marker1) + marker2 + (-100*ring1) + 100*ring2); 
+}
+
 void Board::print_board(){
 
     cout << "   " << "     " << " " << "     " << " " << " " << endl;
@@ -763,7 +851,8 @@ int main(){
     Board my_board = Board(5,5,3);
     int player_number = -1;
     my_board.print_board();
-    
+
+///////////////////////////////FILE INPUT
     while (getline(infile, line))
     {
         if(player_number == -1){ cout<<"Player 1 moves : ";}
@@ -773,17 +862,43 @@ int main(){
         my_board.print_board();
         player_number *= -1;
     }
-
-    cout << "PRINTING ALL POSSIBLE MOVES -"<<endl;
-    cout << "PRINTING ALL POSSIBLE MOVES -"<<endl<<endl;
+//////////////////////////////////////////
 
 
-    vector<pair<Board,vector<Move> > > test;
-    test = my_board.next_move(-1);
+////////////////// BOT
 
-    for(int i = 0; i < test.size(); i++){
-        test[i].first.print_board();
-    }
+    pair<Board, vector<Move> > b;
+
+    for(int i = 0; i < 100; i++){
+        if(player_number == -1){ cout<<"Player 1 moves : ";}
+        else{cout<<"Player 2 moves : ";}
+
+        b = my_board.bot_move(player_number,100);
+        my_board.execute_move(b.second,player_number);
+        
+        string s;
+        getline(cin, s);
+        if(s != "a"){break;}
+        my_board.print_board();
+        player_number *= -1;
+     }
+///////////////////////////////////
+
+
+
+
+
+
+    // cout << "PRINTING ALL POSSIBLE MOVES -"<<endl;
+    // cout << "PRINTING ALL POSSIBLE MOVES -"<<endl<<endl;
+
+
+    // vector<pair<Board,vector<Move> > > test;
+    // test = my_board.next_move(-1);
+
+    // for(int i = 0; i < test.size(); i++){
+    //     test[i].first.print_board();
+    // }
 
 ///////////////////////////////DEBUG
     // vector<Board> possible_moves;
