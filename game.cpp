@@ -181,6 +181,12 @@ public:
     vector<int> cons_marker(int value);
 
     void print_board();
+
+    int row_marker(int x1, int y1, int x2, int y2, int value);
+
+    int board_marker(int value);
+
+    int heuristics(int player_index);
 };
 
 int Board::getring1()
@@ -650,6 +656,197 @@ void Board::print_board(){
     cout << '\n' << '\n';
     cout << "ring1: " << ring1 << '\n' << "ring2: " << ring2 << '\n';
     cout << "marker1: " << marker1 << '\n' << "marker2: " << marker2 << '\n';
+}
+
+
+int Board::row_marker(int x1, int y1, int x2, int y2, int value){
+    int x = x2 - x1;
+    int y = y2 - y1;
+    int size = max(x,y);
+    if(x != 0)x = 1;
+    if(y != 0)y = 1;
+    int check = 0;
+    int firstx, firsty,lastx,lasty;
+    //vector<int> ls;
+    int sum = 0;
+    for(int i = 0; i <= size; i++){
+        int xcurr = x1+i*x;
+        int ycurr = y1+i*y;
+        if(check==0){
+            if(getpositionValue(xcurr,ycurr) == value){
+                firstx = xcurr;
+                firsty = ycurr;
+                check = 1;
+            }
+        }
+        if(check==1){
+            if(getpositionValue(xcurr,ycurr) == value){
+                lastx = xcurr;
+                lasty = ycurr;
+                if((xcurr == x2) && (ycurr == y2)){
+                    int el = max((x2-firstx+1),(y2-firsty+1));
+                    sum = sum + (int)pow(el,3.0);
+                }
+                    //ls.push_back(max((x2-firstx+1),(y2-firsty+1)));
+                
+            }
+            else if(getpositionValue(xcurr,ycurr) != value){
+                check = 0;
+                int el = max(xcurr-firstx,ycurr-firsty);
+                sum = sum + (int)pow(el,3.0);
+                //ls.push_back(max(xcurr-firstx,ycurr-firsty));
+            }
+        }
+    }
+//    return ls;
+    return sum;
+}
+
+int Board::board_marker(int value){
+    vector<int> ret;
+    int sum = 0;
+
+    //vector<int> veco = row_marker(1,5,4,5,value);
+    // for(int j = 0; j < veco.size(); j++)
+    //     ret.push_back(veco[j]);
+
+    int veco = row_marker(1,5,4,5,value);
+    sum += veco;
+    // for(int i = 1; i < 5; i++){
+    //      vector<int> vec = row_marker(-i,5-i,5,5-i,value);
+    // 	    for(int j = 0;j < vec.size(); j++)
+    // 		    ret.push_back(vec[j]);
+    // }
+
+    for(int i = 1; i < 5; i++){
+        int vec = row_marker(-i,5-i,5,5-i,value);
+        sum += vec;    
+    }
+
+    // veco = row_marker(-4,0,4,0,value);
+    // for(int j = 0; j < veco.size(); j++)
+    //     ret.push_back(veco[j]);
+
+    veco = row_marker(-4,0,4,0,value);
+    sum += veco;
+
+    // for(int i = 1; i < 5; i++){
+    //     vector<int> vec = row_marker(-5,-i,5-i,-i,value);
+	// 		for(int j = 0;j < vec.size(); j++)
+	// 			ret.push_back(vec[j]);
+    // }
+
+    for(int i = 1; i < 5; i++){
+        int vec = row_marker(-5,-i,5-i,-i,value);
+        sum += vec;
+    }
+
+    // veco = row_marker(-4,-5,-1,-5,value);
+    // for(int j = 0; j < veco.size(); j++)
+    //     ret.push_back(veco[j]);
+
+    veco = row_marker(-4,-5,-1,-5,value);
+    sum += veco;
+
+///////////////////////
+
+    // veco = row_marker(-5,-4,-5,-1,value);
+    // for(int j = 0; j < veco.size(); j++)
+    //     ret.push_back(veco[j]);
+
+    veco = row_marker(-5,-4,-5,-1,value);
+    sum += veco;
+
+    // for(int i = 1; i < 5; i++){
+    //     vector<int> vec = row_marker(i-5,-5,i-5,i,value);
+	// 		for(int j = 0;j < vec.size(); j++)
+	// 			ret.push_back(vec[j]);
+    // }
+
+    for(int i = 1; i < 5; i++){
+        int vec = row_marker(i-5,-5,i-5,i,value);
+        sum += vec;
+    }
+
+    // veco = row_marker(0,-4,0,4,value);
+    // for(int j = 0; j < veco.size(); j++)
+    //     ret.push_back(veco[j]);
+
+    veco = row_marker(0,-4,0,4,value);
+    sum += veco;
+
+    // for(int i = 1; i < 5; i++){
+    //     vector<int> vec = row_marker(i,i-5,i,5,value);
+	// 		for(int j = 0;j < vec.size(); j++)
+	// 			ret.push_back(vec[j]);
+    // }
+
+    for(int i = 1; i < 5; i++){
+        int vec = row_marker(i,i-5,i,5,value);
+        sum += vec;
+    }
+
+    // veco = row_marker(5,1,5,4,value);
+    // for(int j = 0; j < veco.size(); j++)
+    //     ret.push_back(veco[j]);
+    
+    veco = row_marker(5,1,5,4,value);
+    sum += veco;
+
+//////////////////////////
+
+    // veco = row_marker(-4,1,-1,4,value);
+    // for(int j = 0; j < veco.size(); j++)
+    //     ret.push_back(veco[j]);
+
+    veco = row_marker(-4,1,-1,4,value);
+    sum += veco;
+
+    // for(int i = 1; i < 5; i++){
+    //     vector<int> vec = row_marker(-5,-i,i,5,value);
+	// 		for(int j = 0;j < vec.size(); j++)
+	// 			ret.push_back(vec[j]);
+    // }
+
+    for(int i = 1; i < 5; i++){
+        int vec = row_marker(-5,-i,i,5,value);
+        sum += vec;
+    }
+
+    // veco = row_marker(-4,-4,4,4,value);
+    // for(int j = 0; j < veco.size(); j++)
+    //     ret.push_back(veco[j]);
+
+    veco = row_marker(-4,-4,4,4,value);
+    sum += veco;
+
+    // for(int i = 1; i < 5; i++){
+    //     vector<int> vec = row_marker(i-5,-5,5,5-i,value);
+	// 		for(int j = 0;j < vec.size(); j++)
+	// 			ret.push_back(vec[j]);
+    // }
+
+    for(int i = 1; i < 5; i++){
+        int vec = row_marker(i-5,-5,5,5-i,value);
+        sum += vec;
+    }
+
+    // veco = row_marker(1,-4,4,-1,value);
+    // for(int j = 0; j < veco.size(); j++)
+    //     ret.push_back(veco[j]);
+
+    veco = row_marker(1,-4,4,-1,value);
+    sum += veco;
+
+    return sum;
+
+}
+
+int Board::heuristics(int p){
+    int score = board_marker(p) - board_marker(-p);
+    if(p == -1)
+        score += 100*(ring1_removed - ring2_removed);
+    else score += 100*(ring2_removed - ring1_removed);
 }
 
 
