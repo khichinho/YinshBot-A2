@@ -134,9 +134,11 @@ class Board{
         vector<int> cons_marker(int value);
 
         vector<pair<Board, vector<Move> > > all_moves(int player_number);
-        Board adjacent_move(int x, int y, Direction d);
-
         vector<pair<Board, vector<Move> > > next_move(int player_number);
+        pair<Board, vector<Move> > bot_move(int player_number, int depth);
+        pair<Board, vector<Move> > bot_depth(int player_number, int move_number);
+
+        Board adjacent_move(int x, int y, Direction d);
 
         int row_marker(int x1, int y1, int x2, int y2, int value);
 
@@ -144,13 +146,65 @@ class Board{
 
         int heuristic();
 
-        pair<Board, vector<Move> > bot_move(int player_number, int depth);
-
         string server_output(pair<Board, vector<Move> > server_output_move);
 
-        
+        vector<int> place_position(int player_index);
+
+        bool check_dir(int x1, int y1, int x2, int y2);
 };
 
+vector<int> Board::place_position(int player_index){
+    vector<int> direction {0,1,0,-1,1,0,-1,0,1,1,-1,-1};
+    vector<int> place;
+    vector<vector<int> > player_rings;
+    vector<vector<int> > opponent_rings;
+    if(player_index == -1){
+        player_rings = player1_rings;
+        opponent_rings = player2_rings;
+    }
+    else{
+        player_rings = player2_rings;
+        opponent_rings = player1_rings;
+    }
+
+
+    if(player_index == -1){
+    int n = opponent_rings.size();
+    int arr[n];
+    for(int i = 0; i < n; ++i)
+        arr[i] = i;
+    random_shuffle(arr, arr+n);
+        for(int i = 0; i < opponent_rings.size(); i++){
+            int x = opponent_rings[arr[i]][0];
+            int y = opponent_rings[arr[i]][1];
+            for(int j = 0; j < 6; i++){
+                int xnew = x+direction[2*j];
+                int ynew = y+direction[2*j+1];
+                int flag = 0;
+                if(check_valid_position(xnew,ynew)){
+                    if(get_position(xnew,ynew) == 0){
+                        for(int k = 0; k < player_rings.size(); k++){
+                            if(check_dir(xnew, ynew, player_rings[k][0], player_rings[k][1]) == true){
+                                flag = 1;
+                                break;
+                            }
+                        }
+                        if(flag == 1){
+                            place.push_back(xnew);
+                            place.push_back(ynew);
+                            return place;
+                        }
+                    }
+                }
+            }   
+        }
+    }
+}
+
+bool Board::check_dir(int x1, int y1, int x2, int y2){
+    if((x1 == x2) || (y1 == y2) || (x1-x2 == y1-y2))return true;
+    return false;
+}
 
 string Board::server_output(pair<Board, vector<Move> > server_output_move){
     string move_string; 
@@ -189,13 +243,13 @@ vector<pair<Board, vector<Move> > > Board::all_moves(int player_number){
                 int x2 = player_rings[r][0] + directions[i].xchange;
                 int y2 = player_rings[r][1] + directions[i].ychange;
 
-                bool over_marker = true;
-                bool over_marker_position = true;
+                bool over_marker = false;
+                bool over_marker_position = false;
 
                 while(check_valid_position(x2,y2)){
                     if(get_position(x2,y2) == -2*player_number || get_position(x2,y2) == 2*player_number){break;}
-                    if(get_position(x2,y2) == -1*player_number || get_position(x2,y2) == player_number){over_marker = false;}
-                    else if(get_position(x2,y2) == 0 && over_marker && over_marker_position){
+                    if(get_position(x2,y2) == -1*player_number || get_position(x2,y2) == player_number){over_marker = true;}
+                    else if(get_position(x2,y2) == 0 && over_marker == false && over_marker_position == false){
                         Board new_board = copy_board();
                         vector<Move> new_moves;
                         new_moves.push_back(Move("S",player_rings[r][0],player_rings[r][1]));
@@ -203,7 +257,7 @@ vector<pair<Board, vector<Move> > > Board::all_moves(int player_number){
                         new_board.execute_move(new_moves,player_number);
                         pair<Board,vector<Move> > bmpair(new_board,new_moves);
                         possible_moves.push_back(bmpair);
-                        over_marker_position = false;
+                        over_marker_position = true;
                     }
 
                     x2 += directions[i].xchange;
@@ -213,9 +267,9 @@ vector<pair<Board, vector<Move> > > Board::all_moves(int player_number){
         }
     }
     else{
-        for(int i = -5; i <= 5; i++){
-            for(int j = -5; j <= 5; j++){
-
+        for(int i = 0; i <= 5; i++){
+            bool if_exit = false;
+            for(int j = -i; j <= i; j++){
                 if(check_valid_position(i,j)){
                     if(get_position(i,j) == 0){
                         Board new_board = copy_board();
@@ -224,10 +278,21 @@ vector<pair<Board, vector<Move> > > Board::all_moves(int player_number){
                         new_board.execute_move(new_move,player_number);
                         pair<Board,vector<Move> > bmpair(new_board,new_move);
                         possible_moves.push_back(bmpair);
+                        if_exit = true;
+                        break;
                     }
                 }
             }
+            if(if_exit == true){break;}
         }
+
+        // vector<int> next_p_move = place_position(player_number);
+        // vector<Move> new_move;
+        // Board new_board = copy_board();
+        // new_move.push_back(Move("P",next_p_move[0],next_p_move[1]));
+        // new_board.execute_move(new_move,player_number);
+        // pair<Board,vector<Move> > to_return(new_board,new_move);
+        // possible_moves.push_back(to_return);
     }
 
     return possible_moves;
@@ -275,6 +340,40 @@ vector<pair<Board, vector<Move> > > Board::next_move(int player_number){
                 complete_moves.push_back(after_sm[i]);
             }
         }
+        return complete_moves;
+    }
+
+    else if(check_for_x.size() >= 4){
+
+        vector<Move> rsrex;
+        vector<pair<Board, vector<Move> > > complete_moves;
+
+        vector<vector<int> > x1_coordinates;
+        if(player_number == -1){x1_coordinates = player1_rings;}
+        else{x1_coordinates = player2_rings;}
+
+        Move rs("RS",check_for_x[0],check_for_x[1]);
+        Move re("RE",check_for_x[2],check_for_x[3]);
+        rsrex.push_back(rs);
+        rsrex.push_back(re);
+
+        for(int i = 0; i < x1_coordinates.size(); i++){
+            Move x("X",x1_coordinates[i][0],x1_coordinates[i][1]);
+            rsrex.push_back(x);
+
+            Board board_after_x1 = copy_board();
+            board_after_x1.execute_move(rsrex,player_number);
+
+            vector<pair<Board, vector<Move> > > next_move_after_x1 = board_after_x1.next_move(player_number);
+
+            for(int j = 0; j <next_move_after_x1.size(); j++){
+                vector<Move> update_rsrex =  rsrex;
+                vector<Move> after_x1_move = next_move_after_x1[i].second;
+                update_rsrex.insert(update_rsrex.end(),after_x1_move.begin(),after_x1_move.end());
+                next_move_after_x1[i].second = update_rsrex;
+                complete_moves.push_back(next_move_after_x1[i]);
+            }
+        }
 
         return complete_moves;
     }
@@ -290,7 +389,7 @@ pair<Board, vector<Move> > Board::bot_move(int player_number, int depth){
 
     pair<Board, vector<Move> > move_to_play;
 
-    if(depth = 1){
+    if(depth == 1){
         if(player_number == -1){
             for(int i = 0; i< calculated_moves.size(); i++){
                 if(calculated_moves[i].first.heuristic() < h){
@@ -343,6 +442,13 @@ pair<Board, vector<Move> > Board::bot_move(int player_number, int depth){
     return move_to_play;
 
 ///////////////////////////
+}
+
+pair<Board, vector<Move> > Board::bot_depth(int player_number, int move_number){
+    if(move_number<=5){ return bot_move(player_number,1);}
+    else if(move_number <= 15){ return bot_move(player_number,3);}
+    else if(move_number <= 30){ return bot_move(player_number,4);}
+    else{ return bot_move(player_number,5);}
 }
 
 Board Board::copy_board(){
@@ -865,10 +971,6 @@ void Board::execute_move(vector<Move> movelist, int player_index){
     }
 }
 
-// int Board::heuristic(){
-//     return( (-1*marker1) + marker2 + (-100*ring1) + 100*ring2); 
-// }
-
 int Board::row_marker(int x1, int y1, int x2, int y2, int value){
     int x = x2 - x1;
     int y = y2 - y1;
@@ -894,14 +996,14 @@ int Board::row_marker(int x1, int y1, int x2, int y2, int value){
                 lasty = ycurr;
                 if((xcurr == x2) && (ycurr == y2)){
                     int el = max((x2-firstx+1),(y2-firsty+1));
-                    sum = sum + (int)pow(el,3.0);
+                    sum = sum + (int)pow(el,2.0);
                 }
                 
             }
             else if(get_position(xcurr,ycurr) != value){
                 check = 0;
                 int el = max(xcurr-firstx,ycurr-firsty);
-                sum = sum + (int)pow(el,3.0);
+                sum = sum + (int)pow(el,2.0);
                 //ls.push_back(max(xcurr-firstx,ycurr-firsty));
             }
         }
@@ -982,7 +1084,6 @@ int Board::heuristic(){
     score += 1000*(ring2_removed - ring1_removed);
     return score;
 }
-
 
 void Board::print_board(){
 
@@ -1158,7 +1259,7 @@ int main(){
 
     while(true){
         myfile.open ("log.txt",ios::app);
-        pair<Board, vector<Move> > my_move = my_board.bot_move(player_number,1);
+        pair<Board, vector<Move> > my_move = my_board.bot_move(player_number,3);
         my_board.execute_move(my_move.second,player_number);
         cout << my_board.server_output(my_move) <<endl;
         myfile << my_board.server_output(my_move) << "\n";

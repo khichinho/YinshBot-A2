@@ -635,7 +635,6 @@ vector<int> Board::startend(int x1, int y1, int x2, int y2, int value){
                         ls[0] = firstx;ls[1] = firsty; ls[2] = lastx; ls[3] = lasty;
                     }
                 }
-                                
             }
         }
     }

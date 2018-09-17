@@ -1,2 +1,6 @@
 .vscode
-a.out
+*.out
+*.txt
+server.log
+*.pyc
+results.tsv
