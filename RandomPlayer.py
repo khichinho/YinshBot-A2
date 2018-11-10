@@ -10,7 +10,8 @@ class RandomPlayer:
 		self.player = int(data[0]) - 1 # player can have values 0 and 1
 		self.n = int(data[1]) # n can have values 5, 6, or 7
 		self.time_left = int(data[2])
-		self.game = Game(self.n)
+		self.seq = int(data[3])
+		self.game = Game(self.n, self.seq)
 		self.RingPos = {}
 		self.play()
 
@@ -106,7 +107,7 @@ class RandomPlayer:
 							if success != 0:
 								break
 						state = self.game.check_player_state()
-						move_seq.append(move_start); move_seq.append(move_end)
+						move_seq.append(move_start); move_seq.append(move_end);
 				elif state == 4 or state == 7: ## Select Ring to Remove (State 7 if other players your row)
 					move, i = self.removeRing()
 					del self.RingPos[i]

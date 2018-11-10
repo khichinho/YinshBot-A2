@@ -1104,7 +1104,7 @@ void Board::execute_move(vector<Move> movelist, int player_index){
 
     int Board::heuristic(){
         int score = board_marker(1) - board_marker(-1);
-        score += 1000*(ring2_removed - ring1_removed);
+        score += 3000*(ring2_removed - ring1_removed);
         return score;
     }
 //////////////////////////////////
@@ -1269,8 +1269,6 @@ int main(){
     
     string opponent_move;
     int ply_number = 0;
-
-
 
 
 
