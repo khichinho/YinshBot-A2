@@ -60,7 +60,8 @@ class Board{
         int ring2;
         int marker1;
         int marker2;
-        int markers_removed;  // number of markers, can be removed in one step
+        int markers_per_ring;  // number of markers, to be removed to remove one ring
+        int game_rings; // total_rings to start the game
         int rings_removed;  // total rings to be removed
         int ring1_removed;  // rings removed of player1 till now
         int ring2_removed;  // rings removed of player2 till now
@@ -83,8 +84,9 @@ class Board{
             element.clear();
 
             board_size = 5;
-            markers_removed = 5;
+            markers_per_ring = 5;
             rings_removed = 3;
+            game_rings = 5;
             ring1 = 0;
             ring2 = 0;
             marker1 = 0;
@@ -93,18 +95,19 @@ class Board{
             ring2_removed = 0;
         }
 
-        Board(int b, int m, int r){
+        Board(int n, int m, int k){
             vector<int> element;
-            for(int i = -b; i <= b; i++)
+            for(int i = -n; i <= n; i++)
                 element.push_back(0);
-            for(int i = -b; i <= b; i++)
+            for(int i = -n; i <= n; i++)
                 board_storage.push_back(element);
             
             element.clear();
 
-            board_size = b;
-            markers_removed = m;
-            rings_removed = r;
+            board_size = n;
+            game_rings = m;
+            markers_per_ring = k;
+            rings_removed = 3;
             ring1 = 0;
             ring2 = 0;
             marker1 = 0;
@@ -180,7 +183,7 @@ vector<pair<Board, vector<Move> > > Board::all_moves(int player_number){
     if(player_number == -1){ total_rings = ring1 + ring1_removed;}
     else if(player_number == 1){total_rings = ring2 + ring2_removed;}
     
-    if(total_rings == 5){
+    if(total_rings == game_rings){
         for(int r = 0; r < player_rings.size(); r++){
             for(int i = 0; i< directions.size(); i++){
 
@@ -211,7 +214,7 @@ vector<pair<Board, vector<Move> > > Board::all_moves(int player_number){
         }
     }
     else{
-        for(int i = 0; i <= 5; i++){
+        for(int i = 0; i <= board_size; i++){
             bool if_exit = false;
             for(int j = i; j >= -i; j--){
                 if(check_valid_position(i,j)){
@@ -229,14 +232,6 @@ vector<pair<Board, vector<Move> > > Board::all_moves(int player_number){
             }
             if(if_exit == true){break;}
         }
-
-        // vector<int> next_p_move = place_position(player_number);
-        // vector<Move> new_move;
-        // Board new_board = copy_board();
-        // new_move.push_back(Move("P",next_p_move[0],next_p_move[1]));
-        // new_board.execute_move(new_move,player_number);
-        // pair<Board,vector<Move> > to_return(new_board,new_move);
-        // possible_moves.push_back(to_return);
     }
 
     return possible_moves;
@@ -477,7 +472,7 @@ pair<Board, vector<Move> > Board::bot_depth(int player_number, int move_number){
 
 Board Board::copy_board(){
 
-    Board b = Board(board_size, markers_removed, rings_removed);
+    Board b = Board(board_size, rings_removed, markers_per_ring);
     b.score = score;
     b.ring1 = ring1;
     b.ring2 = ring2;
@@ -485,6 +480,7 @@ Board Board::copy_board(){
     b.marker2= marker2;
     b.ring1_removed = ring1_removed;
     b.ring2_removed = ring2_removed;
+    b.game_rings = game_rings;
 
     b.player1_rings = player1_rings;
     b.player2_rings = player2_rings;
@@ -494,56 +490,134 @@ Board Board::copy_board(){
 
 bool Board::check_valid_position(int x, int y){
 
+    // if(x == 0){
+    //     if(y >= -4 && y <= 4){ return true;}
+    //     else{return false;}
+    // }
+
+    // else if(x == 1){
+    //     if(y >= -4 && y <= 5){ return true;}
+    //     else{return false;}
+    // }
+    // else if(x == 2){
+    //     if(y >= -3 && y <= 5){ return true;}
+    //     else{return false;}
+    // }
+    // else if(x == 3){
+    //     if(y >= -2 && y <= 5){ return true;}
+    //     else{return false;}
+    // }
+    // else if(x == 4){
+    //     if(y >= -1 && y <= 5){ return true;}
+    //     else{return false;}
+    // }
+    // else if(x == 5){
+    //     if(y >= 1 && y <= 4){ return true;}
+    //     else{return false;}
+    // }
+
+    // else if(x == -1){
+    //     if(y >= -5 && y <= 4){ return true;}
+    //     else{return false;}
+    // }
+    // else if(x == -2){
+    //     if(y >= -5 && y <= 3){ return true;}
+    //     else{return false;}
+    // }
+    // else if(x == -3){
+    //     if(y >= -5 && y <= 2){ return true;}
+    //     else{return false;}
+    // }
+    // else if(x == -4){
+    //     if(y >= -5 && y <= 1){ return true;}
+    //     else{return false;}
+    // }
+    // else if(x == -5){
+    //     if(y >= -4 && y <= -1){ return true;}
+    //     else{return false;}
+    // }
+
+    // else{
+    //     return false;
+    // }
+
     if(x == 0){
-        if(y >= -4 && y <= 4){ return true;}
+        if(y >= -(game_rings-1) && y <= (game_rings-1)){ return true;}
         else{return false;}
     }
 
     else if(x == 1){
-        if(y >= -4 && y <= 5){ return true;}
+        if(y >= -(game_rings-1) && y <= (game_rings)){ return true;}
         else{return false;}
     }
     else if(x == 2){
-        if(y >= -3 && y <= 5){ return true;}
+        if(y >= -(game_rings-2) && y <= (game_rings)){ return true;}
         else{return false;}
     }
     else if(x == 3){
-        if(y >= -2 && y <= 5){ return true;}
+        if(y >= -(game_rings-3) && y <= (game_rings)){ return true;}
         else{return false;}
     }
     else if(x == 4){
-        if(y >= -1 && y <= 5){ return true;}
+        if(y >= -(game_rings-4) && y <= (game_rings)){ return true;}
         else{return false;}
     }
     else if(x == 5){
-        if(y >= 1 && y <= 4){ return true;}
-        else{return false;}
+        if(game_rings == 5){
+            if(y >= 1 && y <= 4){ return true;}
+            else{return false;}
+        }
+        else if(game_rings == 6){
+            if(y >= -1 && y <= 6){ return true;}
+            else{return false;}
+        }
+    }
+    else if(x == 6){
+        if(game_rings == 5){return false;}
+        else if(game_rings == 6){
+            if(y >= 1 && y <= 5){return true;}
+            else{return false;}
+        }
     }
 
     else if(x == -1){
-        if(y >= -5 && y <= 4){ return true;}
+        if(y >= -(game_rings) && y <= (game_rings-1)){ return true;}
         else{return false;}
     }
     else if(x == -2){
-        if(y >= -5 && y <= 3){ return true;}
+        if(y >= -(game_rings) && y <= (game_rings-2)){ return true;}
         else{return false;}
     }
     else if(x == -3){
-        if(y >= -5 && y <= 2){ return true;}
+        if(y >= -(game_rings) && y <= (game_rings-3)){ return true;}
         else{return false;}
     }
     else if(x == -4){
-        if(y >= -5 && y <= 1){ return true;}
+        if(y >= -(game_rings) && y <= (game_rings-4)){ return true;}
         else{return false;}
     }
     else if(x == -5){
-        if(y >= -4 && y <= -1){ return true;}
-        else{return false;}
+        if(game_rings == 5){
+            if(y >= -4 && y <= -1){ return true;}
+            else{return false;}
+        }
+        else if(game_rings == 6){
+            if(y >= -6 && y <= 1){ return true;}
+            else{return false;}
+        }
+    }
+    else if(x == -6){
+        if(game_rings == 5){return false;}
+        else if(game_rings == 6){
+            if(y >= -5 && y <= -1){return true;}
+            else{return false;}
+        }
     }
 
     else{
         return false;
     }
+
 }
 
 vector<Move> Board::get_move(string ply){
@@ -572,14 +646,20 @@ string Board::print_position(int x, int y){
 }
 
 int Board::get_position(int x, int y){
-    return board_storage[x+5][y+5];
+    if(game_rings == 5){
+        return board_storage[x+5][y+5];
+    }
+    else{
+        return board_storage[x+6][y+6];
+    }
 }
 
 void Board::set_position(int x, int y, int value){
 
     int init_value = get_position(x, y);
-
-    board_storage[x+5][y+5] = value;
+    
+    if(game_rings == 5){board_storage[x+5][y+5] = value;}
+    else if(game_rings == 6){board_storage[x+6][y+6] = value;}
 
     if(init_value == 2 && value == 1)marker2++;
     else if(init_value == -2 && value == -1)marker1++;
@@ -597,6 +677,11 @@ void Board::set_position(int x, int y, int value){
     else if(init_value == -2 && value == 0)ring1--;
 }
 
+// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+// CORRECT THIS
+// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 vector<int> Board::map_hex_mysys(int hexagon, int index){
     vector<int> my_coord;
     my_coord.push_back(0);
@@ -631,7 +716,6 @@ vector<int> Board::map_hex_mysys(int hexagon, int index){
     }
     return my_coord;
 }
-
 vector<int> Board::map_mysys_hex(int abscissa, int ordinate){
     vector<int> hex_coord;
     hex_coord.push_back(0);
@@ -947,32 +1031,32 @@ void Board::execute_move(vector<Move> movelist, int player_index){
                 else ring2_removed++;
             if(m1.y == m2.y){
                 if(m2.x > m1.x){
-                    for(int i = 0; i < markers_removed; i++)
+                    for(int i = 0; i < markers_per_ring; i++)
                         set_position(m1.x+i, m1.y, 0);
                 }
                 else{
-                    for(int i = 0; i < markers_removed; i++)
+                    for(int i = 0; i < markers_per_ring; i++)
                         set_position(m1.x-i, m1.y, 0);
                 }                
             }
             else if(m1.x == m2.x){
                 if(m2.y > m1.y){
-                    for(int i = 0; i < markers_removed; i++)
+                    for(int i = 0; i < markers_per_ring; i++)
                         set_position(m1.x, m1.y+i, 0);    
                 }
                 else{
-                    for(int i = 0; i < markers_removed; i++){
+                    for(int i = 0; i < markers_per_ring; i++){
                          set_position(m1.x, m1.y-i, 0);
                     }
                 }
             }
             else if(m2.y-m1.y == m2.x-m1.x){
                 if(m2.x > m1.x){
-                    for(int i = 0; i < markers_removed; i++)
+                    for(int i = 0; i < markers_per_ring; i++)
                         set_position(m1.x+i, m1.y+i, 0);
                 }
                 else{
-                    for(int i = 0; i < markers_removed; i++)
+                    for(int i = 0; i < markers_per_ring; i++)
                         set_position(m1.x-i,m1.y-i, 0);
                 }
             }
@@ -1111,27 +1195,52 @@ void Board::execute_move(vector<Move> movelist, int player_index){
 
 void Board::print_board(){
 
-    cout << "   " << "     " << " " << "     " << " " << " " << endl;
-    cout << " " << "     " << " " << "     " << print_position(-1,4) << "     " << print_position(1,5) << endl;
-    cout << "   " << "     " << " " << print_position(-2,3) << "     " << print_position(0,4) << "     " << print_position(2,5) << endl;
-    cout << " " << "     " << print_position(-3,2) << "     " << print_position(-1,3) << "     " << print_position(1,4) << "     " << print_position(3,5) << endl;
-    cout << "   " << print_position(-4,1) << "     " << print_position(-2,2) << "     " << print_position(0,3) << "     " << print_position(2,4) << "     " << print_position(4,5) << endl;
-    cout << " " << "     " << print_position(-3,1) << "     " << print_position(-1,2) << "     " << print_position(1,3) << "     " << print_position(3,4) << "     " << " " << endl;
-    cout << "   " << print_position(-4,0) << "     " << print_position(-2,1) << "     " << print_position(0,2) << "     " << print_position(2,3) << "     " << print_position(4,4) << endl;
-    cout << print_position(-5,-1) << "     " << print_position(-3,0) << "     " << print_position(-1,1) << "     " << print_position(1,2) << "     " << print_position(3,3) << "     " << print_position(5,4) << endl;
-    cout << "   " << print_position(-4,-1) << "     " << print_position(-2,0) << "     " << print_position(0,1) << "     " << print_position(2,2) << "     " << print_position(4,3) << endl;
-    cout << print_position(-5,-2) << "     " << print_position(-3,-1) << "     " << print_position(-1,0) << "     " << print_position(1,1) << "     " << print_position(3,2) << "     " << print_position(5,3) << endl;
-    cout << "   " << print_position(-4,-2) << "     " << print_position(-2,-1) << "     " << print_position(0,0) << "     " << print_position(2,1) << "     " << print_position(4,2) << endl;
-    cout << print_position(-5,-3) << "     " << print_position(-3,-2) << "     " << print_position(-1,-1) << "     " << print_position(1,0) << "     " << print_position(3,1) << "     " << print_position(5,2) << endl;
-    cout << "   " << print_position(-4,-3) << "     " << print_position(-2,-2) << "     " << print_position(0,-1) << "     " << print_position(2,0) << "     " << print_position(4,1) << endl;
-    cout << print_position(-5,-4) << "     " << print_position(-3,-3) << "     " << print_position(-1,-2) << "     " << print_position(1,-1) << "     " << print_position(3,0) << "     " << print_position(5,1) << endl;
-    cout << "   " << print_position(-4,-4) << "     " << print_position(-2,-3) << "     " << print_position(0,-2) << "     " << print_position(2,-1) << "     " << print_position(4,0) << endl;
-    cout << " " << "     " << print_position(-3,-4) << "     " << print_position(-1,-3) << "     " << print_position(1,-2) << "     " << print_position(3,-1) << "     " << " " << endl;
-    cout << "   " << print_position(-4,-5) << "     " << print_position(-2,-4) << "     " << print_position(0,-3) << "     " << print_position(2,-2) << "     " << print_position(4,-1) << endl;
-    cout << " " << "     " << print_position(-3,-5) << "     " << print_position(-1,-4) << "     " << print_position(1,-3) << "     " << print_position(3,-2) << endl;
-    cout << "   " << " " << "     " << print_position(-2,-5) << "     " << print_position(0,-4) <<  "     " << print_position(2,-3) <<endl;
-    cout << " " << "     " << " " << "     " << print_position(-1,-5) << "     " << print_position(1,-4) << endl;
-    cout << "   " << "     " << " " << "     " << " " << " " << endl;
+    if(game_rings == 5){
+        cout << "   " << "     " << " " << "     " << " " << " " << endl;
+        cout << " " << "     " << " " << "     " << print_position(-1,4) << "     " << print_position(1,5) << endl;
+        cout << "   " << "     " << " " << print_position(-2,3) << "     " << print_position(0,4) << "     " << print_position(2,5) << endl;
+        cout << " " << "     " << print_position(-3,2) << "     " << print_position(-1,3) << "     " << print_position(1,4) << "     " << print_position(3,5) << endl;
+        cout << "   " << print_position(-4,1) << "     " << print_position(-2,2) << "     " << print_position(0,3) << "     " << print_position(2,4) << "     " << print_position(4,5) << endl;
+        cout << " " << "     " << print_position(-3,1) << "     " << print_position(-1,2) << "     " << print_position(1,3) << "     " << print_position(3,4) << "     " << " " << endl;
+        cout << "   " << print_position(-4,0) << "     " << print_position(-2,1) << "     " << print_position(0,2) << "     " << print_position(2,3) << "     " << print_position(4,4) << endl;
+        cout << print_position(-5,-1) << "     " << print_position(-3,0) << "     " << print_position(-1,1) << "     " << print_position(1,2) << "     " << print_position(3,3) << "     " << print_position(5,4) << endl;
+        cout << "   " << print_position(-4,-1) << "     " << print_position(-2,0) << "     " << print_position(0,1) << "     " << print_position(2,2) << "     " << print_position(4,3) << endl;
+        cout << print_position(-5,-2) << "     " << print_position(-3,-1) << "     " << print_position(-1,0) << "     " << print_position(1,1) << "     " << print_position(3,2) << "     " << print_position(5,3) << endl;
+        cout << "   " << print_position(-4,-2) << "     " << print_position(-2,-1) << "     " << print_position(0,0) << "     " << print_position(2,1) << "     " << print_position(4,2) << endl;
+        cout << print_position(-5,-3) << "     " << print_position(-3,-2) << "     " << print_position(-1,-1) << "     " << print_position(1,0) << "     " << print_position(3,1) << "     " << print_position(5,2) << endl;
+        cout << "   " << print_position(-4,-3) << "     " << print_position(-2,-2) << "     " << print_position(0,-1) << "     " << print_position(2,0) << "     " << print_position(4,1) << endl;
+        cout << print_position(-5,-4) << "     " << print_position(-3,-3) << "     " << print_position(-1,-2) << "     " << print_position(1,-1) << "     " << print_position(3,0) << "     " << print_position(5,1) << endl;
+        cout << "   " << print_position(-4,-4) << "     " << print_position(-2,-3) << "     " << print_position(0,-2) << "     " << print_position(2,-1) << "     " << print_position(4,0) << endl;
+        cout << " " << "     " << print_position(-3,-4) << "     " << print_position(-1,-3) << "     " << print_position(1,-2) << "     " << print_position(3,-1) << "     " << " " << endl;
+        cout << "   " << print_position(-4,-5) << "     " << print_position(-2,-4) << "     " << print_position(0,-3) << "     " << print_position(2,-2) << "     " << print_position(4,-1) << endl;
+        cout << " " << "     " << print_position(-3,-5) << "     " << print_position(-1,-4) << "     " << print_position(1,-3) << "     " << print_position(3,-2) << endl;
+        cout << "   " << " " << "     " << print_position(-2,-5) << "     " << print_position(0,-4) <<  "     " << print_position(2,-3) <<endl;
+        cout << " " << "     " << " " << "     " << print_position(-1,-5) << "     " << print_position(1,-4) << endl;
+        cout << "   " << "     " << " " << "     " << " " << " " << endl;
+    }
+    else if(game_rings == 6){
+        cout << "   " << "     " << " " << "     " << " " << " " << endl;
+        cout << " " << "     " << " " << "     " << print_position(-1,4) << "     " << print_position(1,5) << endl;
+        cout << "   " << "     " << " " << print_position(-2,3) << "     " << print_position(0,4) << "     " << print_position(2,5) << endl;
+        cout << " " << "     " << print_position(-3,2) << "     " << print_position(-1,3) << "     " << print_position(1,4) << "     " << print_position(3,5) << endl;
+        cout << "   " << print_position(-4,1) << "     " << print_position(-2,2) << "     " << print_position(0,3) << "     " << print_position(2,4) << "     " << print_position(4,5) << endl;
+        cout << " " << "     " << print_position(-3,1) << "     " << print_position(-1,2) << "     " << print_position(1,3) << "     " << print_position(3,4) << "     " << " " << endl;
+        cout << "   " << print_position(-4,0) << "     " << print_position(-2,1) << "     " << print_position(0,2) << "     " << print_position(2,3) << "     " << print_position(4,4) << endl;
+        cout << print_position(-5,-1) << "     " << print_position(-3,0) << "     " << print_position(-1,1) << "     " << print_position(1,2) << "     " << print_position(3,3) << "     " << print_position(5,4) << endl;
+        cout << "   " << print_position(-4,-1) << "     " << print_position(-2,0) << "     " << print_position(0,1) << "     " << print_position(2,2) << "     " << print_position(4,3) << endl;
+        cout << print_position(-5,-2) << "     " << print_position(-3,-1) << "     " << print_position(-1,0) << "     " << print_position(1,1) << "     " << print_position(3,2) << "     " << print_position(5,3) << endl;
+        cout << "   " << print_position(-4,-2) << "     " << print_position(-2,-1) << "     " << print_position(0,0) << "     " << print_position(2,1) << "     " << print_position(4,2) << endl;
+        cout << print_position(-5,-3) << "     " << print_position(-3,-2) << "     " << print_position(-1,-1) << "     " << print_position(1,0) << "     " << print_position(3,1) << "     " << print_position(5,2) << endl;
+        cout << "   " << print_position(-4,-3) << "     " << print_position(-2,-2) << "     " << print_position(0,-1) << "     " << print_position(2,0) << "     " << print_position(4,1) << endl;
+        cout << print_position(-5,-4) << "     " << print_position(-3,-3) << "     " << print_position(-1,-2) << "     " << print_position(1,-1) << "     " << print_position(3,0) << "     " << print_position(5,1) << endl;
+        cout << "   " << print_position(-4,-4) << "     " << print_position(-2,-3) << "     " << print_position(0,-2) << "     " << print_position(2,-1) << "     " << print_position(4,0) << endl;
+        cout << " " << "     " << print_position(-3,-4) << "     " << print_position(-1,-3) << "     " << print_position(1,-2) << "     " << print_position(3,-1) << "     " << " " << endl;
+        cout << "   " << print_position(-4,-5) << "     " << print_position(-2,-4) << "     " << print_position(0,-3) << "     " << print_position(2,-2) << "     " << print_position(4,-1) << endl;
+        cout << " " << "     " << print_position(-3,-5) << "     " << print_position(-1,-4) << "     " << print_position(1,-3) << "     " << print_position(3,-2) << endl;
+        cout << "   " << " " << "     " << print_position(-2,-5) << "     " << print_position(0,-4) <<  "     " << print_position(2,-3) <<endl;
+        cout << " " << "     " << " " << "     " << print_position(-1,-5) << "     " << print_position(1,-4) << endl;
+        cout << "   " << "     " << " " << "     " << " " << " " << endl;
+    }
 
     cout << '\n';
     cout << "player 1 rings: " << ring1 << '\n' << "player 2 rings: " << ring2 << '\n';
@@ -1140,6 +1249,70 @@ void Board::print_board(){
 }
 
 int main(){
+//////////////// SERVER ///////////
+    string game_data;
+    getline(cin, game_data);
+
+    vector<string> game_data_vector;
+
+    stringstream data(game_data);
+    string line;
+
+    while(getline(data,line,' ')){
+        game_data_vector.push_back(line);
+    }
+
+    int player_number;
+
+    if(stoi(game_data_vector[0]) == 1){ player_number = -1;}
+    else{player_number = 1;}
+    
+    int number_of_rings = stoi(game_data_vector[1]);
+    int game_time = stoi(game_data_vector[2]);
+    
+    // Board(N, M, K)
+    // N=board size, M=starting rings, K=consecutive markers to remove ring.
+    Board my_board = Board(5,number_of_rings,3);
+
+    ofstream ofs;
+    ofs.open("log.txt", ofstream::out | ofstream::trunc);
+    ofs.close();
+
+    ofstream myfile;
+    myfile.open ("log.txt",ios::app);
+    
+    string opponent_move;
+    int ply_number = 0;
+
+
+
+    if(player_number == 1){
+        getline(cin, opponent_move);
+        vector<Move> op_move_list = my_board.get_move(opponent_move);
+        myfile << opponent_move <<"\n";
+        my_board.execute_move(op_move_list, -1);
+    }
+
+    myfile.close();
+
+    while(true){
+        ply_number += 1;
+        myfile.open ("log.txt",ios::app);
+        pair<Board, vector<Move> > my_move = my_board.bot_depth(player_number,ply_number);
+        my_board.execute_move(my_move.second,player_number);
+        myfile << my_board.server_output(my_move) << "\n";
+        cout << my_board.server_output(my_move) <<endl;
+
+        getline(cin, opponent_move);
+        vector<Move> op_move_list = my_board.get_move(opponent_move);
+        myfile << opponent_move <<"\n";
+        my_board.execute_move(op_move_list, -1*player_number);
+
+        myfile.close();
+    }
+///////////////////////////////////
+    return(1);
+
 
     // ifstream infile("thefile.txt");
     // string line;
@@ -1236,66 +1409,4 @@ int main(){
     //      player_number *= -1;
     //  }
 ///////////////////////////////////
-
-//////////////// SERVER ///////////
-    string game_data;
-    getline(cin, game_data);
-
-    vector<string> game_data_vector;
-
-    stringstream data(game_data);
-    string line;
-
-    while(getline(data,line,' ')){
-        game_data_vector.push_back(line);
-    }
-
-    int player_number;
-
-    if(stoi(game_data_vector[0]) == 1){ player_number = -1;}
-    else{player_number = 1;}
-    
-    int number_of_rings = stoi(game_data_vector[1]);
-    int game_time = stoi(game_data_vector[2]);
-
-    Board my_board = Board(5,number_of_rings,3);
-
-    ofstream ofs;
-    ofs.open("log.txt", ofstream::out | ofstream::trunc);
-    ofs.close();
-
-    ofstream myfile;
-    myfile.open ("log.txt",ios::app);
-    
-    string opponent_move;
-    int ply_number = 0;
-
-
-
-    if(player_number == 1){
-        getline(cin, opponent_move);
-        vector<Move> op_move_list = my_board.get_move(opponent_move);
-        myfile << opponent_move <<"\n";
-        my_board.execute_move(op_move_list, -1);
-    }
-
-    myfile.close();
-
-    while(true){
-        ply_number += 1;
-        myfile.open ("log.txt",ios::app);
-        pair<Board, vector<Move> > my_move = my_board.bot_depth(player_number,ply_number);
-        my_board.execute_move(my_move.second,player_number);
-        myfile << my_board.server_output(my_move) << "\n";
-        cout << my_board.server_output(my_move) <<endl;
-
-        getline(cin, opponent_move);
-        vector<Move> op_move_list = my_board.get_move(opponent_move);
-        myfile << opponent_move <<"\n";
-        my_board.execute_move(op_move_list, -1*player_number);
-
-        myfile.close();
-    }
-///////////////////////////////////
-    return(1);
 }
