@@ -32,7 +32,7 @@ class Direction{
     public:
         int xchange;
         int ychange;
-    
+
         Direction(int xc, int yc){
             xchange = xc;
             ychange = yc;
@@ -55,17 +55,15 @@ class Move{
 class Board{
 
     private:
-        int score;
-        int ring1;
-        int ring2;
-        int marker1;
-        int marker2;
+        int ring1; // rings for player 1 on the board
+        int ring2; // rings for player 2 on the board
+        int marker1; // markers for player 1 on the board
+        int marker2; // markers for player 2 on the board
         int markers_per_ring;  // number of markers, to be removed to remove one ring
         int game_rings; // total_rings to start the game
-        int rings_removed;  // total rings to be removed
-        int ring1_removed;  // rings removed of player1 till now
-        int ring2_removed;  // rings removed of player2 till now
-        int board_size;
+        int ring1_removed; // rings removed of player1 till now
+        int ring2_removed; // rings removed of player2 till now
+        int board_size; // understandable
 
     public:
 
@@ -85,7 +83,6 @@ class Board{
 
             board_size = 5;
             markers_per_ring = 5;
-            rings_removed = 3;
             game_rings = 5;
             ring1 = 0;
             ring2 = 0;
@@ -101,13 +98,11 @@ class Board{
                 element.push_back(0);
             for(int i = -n; i <= n; i++)
                 board_storage.push_back(element);
-            
             element.clear();
 
             board_size = n;
             game_rings = m;
             markers_per_ring = k;
-            rings_removed = 3;
             ring1 = 0;
             ring2 = 0;
             marker1 = 0;
@@ -138,7 +133,6 @@ class Board{
 
         vector<pair<Board, vector<Move> > > all_moves(int player_number);
         vector<pair<Board, vector<Move> > > next_move(int player_number);
-        // pair<Board, vector<Move> > bot_move(int player_number, int depth);
         pair<Board, vector<Move> > bot_move(int player_number, int depth, int alpha, int beta);
         pair<Board, vector<Move> > bot_depth(int player_number, int move_number);
 
@@ -472,8 +466,7 @@ pair<Board, vector<Move> > Board::bot_depth(int player_number, int move_number){
 
 Board Board::copy_board(){
 
-    Board b = Board(board_size, rings_removed, markers_per_ring);
-    b.score = score;
+    Board b = Board(board_size, game_rings, markers_per_ring);
     b.ring1 = ring1;
     b.ring2 = ring2;
     b.marker1 = marker1;
@@ -489,58 +482,6 @@ Board Board::copy_board(){
 }
 
 bool Board::check_valid_position(int x, int y){
-
-    // if(x == 0){
-    //     if(y >= -4 && y <= 4){ return true;}
-    //     else{return false;}
-    // }
-
-    // else if(x == 1){
-    //     if(y >= -4 && y <= 5){ return true;}
-    //     else{return false;}
-    // }
-    // else if(x == 2){
-    //     if(y >= -3 && y <= 5){ return true;}
-    //     else{return false;}
-    // }
-    // else if(x == 3){
-    //     if(y >= -2 && y <= 5){ return true;}
-    //     else{return false;}
-    // }
-    // else if(x == 4){
-    //     if(y >= -1 && y <= 5){ return true;}
-    //     else{return false;}
-    // }
-    // else if(x == 5){
-    //     if(y >= 1 && y <= 4){ return true;}
-    //     else{return false;}
-    // }
-
-    // else if(x == -1){
-    //     if(y >= -5 && y <= 4){ return true;}
-    //     else{return false;}
-    // }
-    // else if(x == -2){
-    //     if(y >= -5 && y <= 3){ return true;}
-    //     else{return false;}
-    // }
-    // else if(x == -3){
-    //     if(y >= -5 && y <= 2){ return true;}
-    //     else{return false;}
-    // }
-    // else if(x == -4){
-    //     if(y >= -5 && y <= 1){ return true;}
-    //     else{return false;}
-    // }
-    // else if(x == -5){
-    //     if(y >= -4 && y <= -1){ return true;}
-    //     else{return false;}
-    // }
-
-    // else{
-    //     return false;
-    // }
-
     if(x == 0){
         if(y >= -(game_rings-1) && y <= (game_rings-1)){ return true;}
         else{return false;}
@@ -646,20 +587,14 @@ string Board::print_position(int x, int y){
 }
 
 int Board::get_position(int x, int y){
-    if(game_rings == 5){
-        return board_storage[x+5][y+5];
-    }
-    else{
-        return board_storage[x+6][y+6];
-    }
+    return board_storage[x+game_rings][y+game_rings];
 }
 
 void Board::set_position(int x, int y, int value){
 
     int init_value = get_position(x, y);
-    
-    if(game_rings == 5){board_storage[x+5][y+5] = value;}
-    else if(game_rings == 6){board_storage[x+6][y+6] = value;}
+
+    board_storage[x+game_rings][y+game_rings] = value;
 
     if(init_value == 2 && value == 1)marker2++;
     else if(init_value == -2 && value == -1)marker1++;
@@ -758,6 +693,7 @@ vector<int> Board::map_mysys_hex(int abscissa, int ordinate){
 
 vector<int> Board::startend(int x1, int y1, int x2, int y2, int value){
     vector<int> ls;
+    int k = markers_per_ring;
     ls.push_back(0);
     ls.push_back(0);
     ls.push_back(0);
@@ -781,14 +717,14 @@ vector<int> Board::startend(int x1, int y1, int x2, int y2, int value){
                     lastx = i;
                     lasty = y1;
                     if(i == x2){
-                        if(x2 - firstx >= 4){
+                        if(x2 - firstx >= k-1){
                             ls[0] = firstx;ls[1] = firsty; ls[2] = lastx; ls[3] = lasty;
                         }
                     }
                 }
                 else if(get_position(i,y1) != value){
                     check = 0;
-                    if(i-firstx >= 5){
+                    if(i-firstx >= k){
                         ls[0] = firstx;ls[1] = firsty; ls[2] = lastx; ls[3] = lasty;
                     }
                 }
@@ -810,14 +746,14 @@ vector<int> Board::startend(int x1, int y1, int x2, int y2, int value){
                     lastx = x1;
                     lasty = i;
                     if(i == y2){
-                        if(y2 - firsty >= 4){
+                        if(y2 - firsty >= k-1){
                             ls[0] = firstx;ls[1] = firsty; ls[2] = lastx; ls[3] = lasty;
                         }
                     }
                 }
                 else if(get_position(x1, i) != value){
                     check = 0;
-                    if(i-firsty >= 5){
+                    if(i-firsty >= k){
                         ls[0] = firstx;ls[1] = firsty; ls[2] = lastx; ls[3] = lasty;
                     }
                 }
@@ -838,18 +774,17 @@ vector<int> Board::startend(int x1, int y1, int x2, int y2, int value){
                 if(get_position(i,y1+i-x1) == value){
                     lastx = i;lasty = y1+i-x1;
                     if(i == x2){
-                        if(x2 - firstx >= 4){
+                        if(x2 - firstx >= k-1){
                             ls[0] = firstx;ls[1] = firsty; ls[2] = lastx; ls[3] = lasty;
                         }
                     }
                 }
                 else if(get_position(i, y1+i-x1) != value){
                     check = 0;
-                    if(i-firstx >= 5){
+                    if(i-firstx >= k){
                         ls[0] = firstx;ls[1] = firsty; ls[2] = lastx; ls[3] = lasty;
                     }
                 }
-                                
             }
         }
     }
@@ -857,97 +792,77 @@ vector<int> Board::startend(int x1, int y1, int x2, int y2, int value){
 }
 
 vector<int> Board::moves_row(vector<int> ls){
-	vector<int> vec;
-	if(!((ls[0] == 0) && (ls[1] == 0) && (ls[2] == 0) && (ls[3] == 0))){
-		int x = ls[2] - ls[0];
-		int y = ls[3] - ls[1];
-		int size = max(x,y)+1;
-		if(x != 0)x=1;
-		if(y != 0)y=1;
-		for(int i = 0; i <= size-5; i++){
-			vec.push_back(ls[0]+i*x);
-			vec.push_back(ls[1]+i*y);
-			vec.push_back(ls[0]+(i+4)*x);
-			vec.push_back(ls[1]+(i+4)*y);
-		}
-	}
-	else vec.push_back(0);
-	return vec;
+    vector<int> vec;
+    int k = markers_per_ring;
+    if(!((ls[0] == 0) && (ls[1] == 0) && (ls[2] == 0) && (ls[3] == 0))){
+        int x = ls[2] - ls[0];
+        int y = ls[3] - ls[1];
+        int size = max(x,y)+1;
+        if(x != 0)x=1;
+        if(y != 0)y=1;
+        for(int i = 0; i <= size-k; i++){
+            vec.push_back(ls[0]+i*x);
+            vec.push_back(ls[1]+i*y);
+            vec.push_back(ls[0]+(i+k-1)*x);
+            vec.push_back(ls[1]+(i+k-1)*y);
+        }
+    }
+    else vec.push_back(0);
+    return vec;
+}
+
+vector<vector<int> > end_pts(int n){
+    vector<vector<int> > endcoord;
+    
+    for(int i=1;i<n;i++){
+        vector<int> el1{-i,n-i,n,n-i};
+        vector<int> el2{-n,-i,n-i,-i};
+        vector<int> el3{i-n,-n,i-n,i};
+        vector<int> el4{i,i-n,i,n};
+        vector<int> el5{-n,-i,i,n};
+        vector<int> el6{i-n,-n,n,n-i};
+        endcoord.push_back(el1);
+        endcoord.push_back(el2);
+        endcoord.push_back(el3);
+        endcoord.push_back(el4);
+        endcoord.push_back(el5);
+        endcoord.push_back(el6);
+    }
+
+    vector<int> el1{-(n-1),0,n-1,0};
+    vector<int> el2{0,-(n-1),0,n-1};
+    vector<int> el3{-(n-1),-(n-1),n-1,n-1};
+    vector<int> ea1{1,n,n-1,n};
+    vector<int> ea2{-(n-1),-n,-1,-n};
+    vector<int> ea3{-(n-1),1,-1,n-1};
+    vector<int> ea4{1,-(n-1),(n-1),-1};
+    vector<int> ea5{-n,-(n-1),-n,-1};
+    vector<int> ea6{n,1,n,(n-1)};
+    endcoord.push_back(el1);
+    endcoord.push_back(el2);
+    endcoord.push_back(el3);
+    endcoord.push_back(ea1);
+    endcoord.push_back(ea2);
+    endcoord.push_back(ea3);
+    endcoord.push_back(ea4);
+    endcoord.push_back(ea5);
+    endcoord.push_back(ea6);
+
+    return endcoord;
 }
 
 vector<int> Board::cons_marker(int value){
-    vector<int> cons_mark;
-
-    for(int i = 1; i < 5; i++){
-        vector<int> vec = moves_row(startend(-i,5-i,5,5-i,value));
+    vector<vector<int> > border_pts = end_pts(board_size);
+    vector<int> consmark;
+    for(int i=0;i<border_pts.size();i++){
+        vector<int> vec = moves_row(startend(border_pts[i][0],border_pts[i][1],border_pts[i][2],border_pts[i][3],value));
         if(vec.size() != 1){
-			for(int j = 0;j < vec.size(); j++)
-				cons_mark.push_back(vec[j]);
+            for(int j=0;j<vec.size(); j++)
+                consmark.push_back(vec[j]);
         }
     }
-
-
-    vector<int> veco = moves_row(startend(-4,0,4,0,value));
-    if(veco.size() != 1){
-        for(int j = 0;j < veco.size(); j++)
-            cons_mark.push_back(veco[j]);
-    }
-
-    for(int i = 1; i < 5; i++){
-        vector<int> vec = moves_row(startend(-5,-i,5,-i,value));
-        if(vec.size() != 1){
-            for(int j = 0;j < vec.size(); j++)
-               cons_mark.push_back(vec[j]);
-        }
-    }
-
-    for(int i = 1; i < 5; i++){
-        vector<int> vec = moves_row(startend(i-5,-5,i-5,i,value));
-        if(vec.size() != 1){
-            for(int j = 0;j < vec.size(); j++)
-                cons_mark.push_back(vec[j]);
-        }
-    }
-
-    veco = moves_row(startend(0,-4,0,4,value));
-    if(veco.size() != 1){
-        for(int j = 0;j < veco.size(); j++)
-            cons_mark.push_back(veco[j]);
-    }
-
-    for(int i = 1; i < 5; i++){
-        vector<int> vec = moves_row(startend(i,i-5,i,5,value));
-        if(vec.size() != 1){
-            for(int j = 0;j < vec.size(); j++)
-            cons_mark.push_back(vec[j]);
-        }
-    }
-
-    for(int i = 1; i < 5; i++){
-        vector<int> vec = moves_row(startend(-5,-i,i,5,value));
-        if(vec.size() != 1){
-            for(int j = 0;j < vec.size(); j++)
-            cons_mark.push_back(vec[j]);
-        }
-    }
-
-    veco = moves_row(startend(-4,-4,4,4,value));
-    if(veco.size() != 1){
-        for(int j = 0;j < veco.size(); j++)
-            cons_mark.push_back(veco[j]);
-    }
-
-    for(int i = 1; i < 5; i++){
-        vector<int> vec = moves_row(startend(i-5,-5,5,5-i,value));
-        if(vec.size() != 1){
-            for(int j = 0;j < vec.size(); j++)
-                cons_mark.push_back(vec[j]);
-        }
-    }
-    if(cons_mark.size() == 0)cons_mark.push_back(0);
-
-    return cons_mark;
-
+    if(consmark.size() == 0)consmark.push_back(0);
+    return consmark;
 }
 
 void Board::execute_move(vector<Move> movelist, int player_index){
@@ -1037,7 +952,7 @@ void Board::execute_move(vector<Move> movelist, int player_index){
                 else{
                     for(int i = 0; i < markers_per_ring; i++)
                         set_position(m1.x-i, m1.y, 0);
-                }                
+                }
             }
             else if(m1.x == m2.x){
                 if(m2.y > m1.y){
@@ -1269,10 +1184,11 @@ int main(){
     
     int number_of_rings = stoi(game_data_vector[1]);
     int game_time = stoi(game_data_vector[2]);
+
     
     // Board(N, M, K)
     // N=board size, M=starting rings, K=consecutive markers to remove ring.
-    Board my_board = Board(5,number_of_rings,3);
+    Board my_board = Board(6,6,6);
 
     ofstream ofs;
     ofs.open("log.txt", ofstream::out | ofstream::trunc);
@@ -1283,8 +1199,6 @@ int main(){
     
     string opponent_move;
     int ply_number = 0;
-
-
 
     if(player_number == 1){
         getline(cin, opponent_move);
