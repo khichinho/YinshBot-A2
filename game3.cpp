@@ -183,6 +183,7 @@ class Board{
 
         vector<vector<int> > player1_rings;
         vector<vector<int> > player2_rings;
+        
 
         // Board(){
         //     vector<int> element;
@@ -228,6 +229,8 @@ class Board{
         void set_position(int x, int y, int value);  // used to set the value in the given position
         bool check_valid_position(int x, int y);    // used if the given position exists in the board
 
+        int get_ring1_removed();
+        int get_ring2_removed();
         // vector<Move> get_move(string ply);
 
         // vector<int> map_hex_mysys(int hexagon, int index); // used to convert hex coordinate to my coordinate
@@ -263,6 +266,12 @@ class Board{
         pair<vector<Move>, int> max_tree(Board b, int player_index);
 };
 
+int Board::get_ring1_removed(){
+    return ring1_removed;
+}
+int Board::get_ring2_removed(){
+    return ring2_removed;
+}
 
 bool Board::check_valid_position(int x, int y){
     int s = board_size;
@@ -826,6 +835,15 @@ vector<vector<Move> > all_moves(Board bord,int player_index){
         init_move.push_back(rem_end);
         init_move.push_back(rem_ring);
         b.execute_move(init_move,player_index);
+
+        int r;
+        if(player_index == -1)r = b.get_ring1_removed();
+        else r = b.get_ring2_removed();
+        if(r == 3){
+            possible_moves.push_back(init_move);
+            return possible_moves;
+        }
+
     }
     if(player_index == -1)player_rings = b.player1_rings;
     else {
@@ -1130,8 +1148,8 @@ int main(){
     }
     
     // cout << "11";
-    // int x = 0;
-    while(true){
+    int x = 0;
+    while(x<10){
         vector<Move> next_move = minimax(my_board,player_number,2);
         my_board.execute_move(next_move,player_number);
         cout << mov_string(next_move) << endl;
@@ -1139,18 +1157,17 @@ int main(){
         getline(cin,opponent_move);
         vector<Move> opp_move = movlist(opponent_move);
         my_board.execute_move(opp_move,-1*player_number);
-        // x++;
+        x++;
     }
-    // while(true){
-    //     vector<Move> next_move = minimax(my_board,player_number,2);
-    //     my_board.execute_move(next_move,player_number);
-    //     cout << mov_string(next_move) << endl;
+    while(true){
+        vector<Move> next_move = minimax(my_board,player_number,3);
+        my_board.execute_move(next_move,player_number);
+        cout << mov_string(next_move) << endl;
 
-    //     getline(cin,opponent_move);
-    //     vector<Move> opp_move = movlist(opponent_move);
-    //     my_board.execute_move(opp_move,-1*player_number);
+        getline(cin,opponent_move);
+        vector<Move> opp_move = movlist(opponent_move);
+        my_board.execute_move(opp_move,-1*player_number);
 
-    // }
+    }
     return 0;
-
 }
