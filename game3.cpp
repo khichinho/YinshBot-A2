@@ -1,14 +1,12 @@
 #include<iostream>
 #include<vector>
 #include<string>
-// #include<sstream>
-// #include<fstream>
 #include<algorithm>
 // #include<utility>
 #include<math.h>
-#include <boost/foreach.hpp>
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/split.hpp>
+// #include <boost/foreach.hpp>
+// #include <boost/algorithm/string/classification.hpp>
+// #include <boost/algorithm/string/split.hpp>
 
 
 // Things to do - find successor when the opponent has made consecutive 5 markers of yours
@@ -100,15 +98,35 @@ vector<int> map_mysys_hex(int abscissa, int ordinate){
     return hex_coord;
 }
 
-vector <string> splitstr(string str){
-    vector<string> str_vec;
-    typedef vector<string> Tokens;
-    Tokens tokens;
-    boost::split( tokens, str, boost::is_any_of(" ") );
-    BOOST_FOREACH( const string& i, tokens){
-        str_vec.push_back(i);
+// vector <string> splitstring(string str){
+//     vector<string> str_vec;
+//     typedef vector<string> Tokens;
+//     Tokens tokens;
+//     boost::split( tokens, str, boost::is_any_of(" ") );
+//     BOOST_FOREACH( const string& i, tokens){
+//         str_vec.push_back(i);
+//     }
+//     return str_vec; 
+// }
+
+
+vector<string> splitstr(string str, char dl){
+    string word = "";
+    int num = 0;
+    str = str + dl;
+    int l = str.size();
+    vector<string> substr_list;
+    
+    for (int i = 0; i < l; i++) {
+        if (str[i] != dl)
+            word = word + str[i];
+        else {
+            if ((int)word.size() != 0)
+                substr_list.push_back(word);
+            word = "";
+        }
     }
-    return str_vec; 
+    return substr_list;
 }
 
 
@@ -125,18 +143,35 @@ class Move{
         }
 };
 
+// vector<Move> movlist(string ply){
+//     vector<Move> ret;
+//     vector<string> movstr = splitstr(ply);
+//     for(int i = 0; i < movstr.size(); i = i+3){
+//         int hex = stoi(movstr[i+1]);
+//         int ind = stoi(movstr[i+2]);
+//         vector<int> coord = map_hex_mysys(hex,ind);
+//         Move m1(movstr[i], coord[0], coord[1]);
+//         ret.push_back(m1);
+//     }
+//     return ret;
+// }
+
 vector<Move> movlist(string ply){
-    vector<Move> ret;
-    vector<string> movstr = splitstr(ply);
-    for(int i = 0; i < movstr.size(); i = i+3){
-        int hex = stoi(movstr[i+1]);
-        int ind = stoi(movstr[i+2]);
-        vector<int> coord = map_hex_mysys(hex,ind);
-        Move m1(movstr[i], coord[0], coord[1]);
-        ret.push_back(m1);
+    vector<string> ply_vector = splitstr(ply, ' ');
+    vector<Move> my_move;
+
+    for(int i = 0; i < ply_vector.size()/3; i++){
+        vector<int> hex_coordinates;
+        hex_coordinates.push_back(stoi(ply_vector[3*i + 1]));
+        hex_coordinates.push_back(stoi(ply_vector[3*i + 2]));
+        vector<int> mysys_coordinates = map_hex_mysys(hex_coordinates[0],hex_coordinates[1]);
+
+        Move m = Move(ply_vector[3*i], mysys_coordinates[0], mysys_coordinates[1]);
+        my_move.push_back(m);
     }
-    return ret;
+    return(my_move);
 }
+
 
 string mov_string(vector<Move> movelist){
     string ret;
@@ -216,10 +251,14 @@ class Board{
         // vector<int> map_mysys_hex(int abscissa, int ordinate);  // used to convert my coordinate to hex coordinate
 
         void execute_move(vector<Move>, int player_index); // execute the given move
-        vector<int> marker_coordinate_feature(int s1,int f1,int s2, int f2, int value);
-        vector<int> marker_set(int s1,int f1, int s2, int f2, int value);
-        vector<int> total_marker_sets(int value);
-        int num_moves(int player_index);
+
+
+        vector<int> marker_coordinate_feature(int s1,int f1,int s2, int f2, int value); // used to find the coordinates of end points of consecutive markers in a row
+        vector<int> marker_set(int s1,int f1, int s2, int f2, int value);   // used to find the number of k-length conseutive markers in a row. k vary from 1 to markers_per_ring-1
+                                                                            // nth index of vector returns the number of n length consecutive markers
+        vector<int> total_marker_sets(int value);   // total number of k-set consecutive markers in the board
+        
+        int num_moves(int player_index);    // it returns total number of moves a player can play
 
         void print_board();
         string print_position(int x, int y);
@@ -234,18 +273,9 @@ class Board{
 
         vector<int> cons_marker_old(int value);
 
-        // Board adjacent_move(int x, int y, Direction d);
-
-        // int row_marker(int x1, int y1, int x2, int y2, int value);
-
-        // int board_marker(int value);
-
         int heuristic();
 
-        // string server_output(pair<Board, vector<Move> > server_output_move);
 
-        // pair<vector<Move>, int> min_tree(Board b, int player_index);
-        // pair<vector<Move>, int> max_tree(Board b, int player_index);
 };
 
 int Board::get_ring1_removed(){
@@ -367,7 +397,6 @@ void Board::set_position(int x, int y, int value){
     else if(init_value == 2 && value == 0)ring2--;
     else if(init_value == -2 && value == 0)ring1--;
 }
-
 
 
 vector<int> Board::startend(int x1, int y1, int x2, int y2, int value){
