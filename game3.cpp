@@ -1,10 +1,10 @@
 #include<iostream>
 #include<vector>
 #include<string>
-#include<sstream>
-#include<fstream>
+// #include<sstream>
+// #include<fstream>
 #include<algorithm>
-#include<utility>
+// #include<utility>
 #include<math.h>
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -15,7 +15,7 @@
 
 // changes in the code to generalize for board size and initial rings
 //map_hex_mysys and map_mysys_hex are same
-// see board initialization, rings_removed is renamed as rings_init
+// see board initialization, rings_removed is renamed as game_rings
 // slight change in get_position and set_position. 5 is replaced by board_size.Compare it
 // startend, cons_marker and moves_row are updated. 1 helper function endpts is used. Update these functions
 
@@ -166,16 +166,16 @@ class Direction{
 class Board{
 
     private:
-        int score;
+        // int score;
         int ring1;
         int ring2;
         int marker1;
         int marker2;
-        int markers_removed;  // number of markers, can be removed in one step
-        int rings_init;  // no of starting rings
+        int markers_per_ring;  // number of markers, can be removed in one step
+        int game_rings;  // no of starting rings
         int ring1_removed;  // rings removed of player1 till now
         int ring2_removed;  // rings removed of player2 till now
-        int board_size;
+        int board_size; // size of the board
 
     public:
 
@@ -184,27 +184,6 @@ class Board{
         vector<vector<int> > player1_rings;
         vector<vector<int> > player2_rings;
         
-
-        // Board(){
-        //     vector<int> element;
-        //     for(int i = -5; i <= 5; i++)
-        //         element.push_back(0);
-        //     for(int i = -5; i <= 5; i++)
-        //         board_storage.push_back(element);
-
-        //     element.clear();
-
-        //     board_size = 5;
-        //     markers_removed = 5;
-        //     rings_init = 5;
-        //     ring1 = 0;
-        //     ring2 = 0;
-        //     marker1 = 0;
-        //     marker2 = 0;
-        //     ring1_removed = 0;
-        //     ring2_removed = 0;
-        // }
-
         Board(int n, int m, int k){     // n,m and k are board_size , initial rings and no of markers to be removed respectively
             vector<int> element;
             for(int i = -n; i <= n; i++)
@@ -215,8 +194,8 @@ class Board{
             element.clear();
 
             board_size = n;
-            markers_removed = k;
-            rings_init = m;
+            markers_per_ring = k;
+            game_rings = m;
             ring1 = 0;
             ring2 = 0;
             marker1 = 0;
@@ -237,7 +216,10 @@ class Board{
         // vector<int> map_mysys_hex(int abscissa, int ordinate);  // used to convert my coordinate to hex coordinate
 
         void execute_move(vector<Move>, int player_index); // execute the given move
-
+        vector<int> marker_coordinate_feature(int s1,int f1,int s2, int f2, int value);
+        vector<int> marker_set(int s1,int f1, int s2, int f2, int value);
+        vector<int> total_marker_sets(int value);
+        int num_moves(int player_index);
 
         void print_board();
         string print_position(int x, int y);
@@ -252,18 +234,18 @@ class Board{
 
         vector<int> cons_marker_old(int value);
 
-        Board adjacent_move(int x, int y, Direction d);
+        // Board adjacent_move(int x, int y, Direction d);
 
-        int row_marker(int x1, int y1, int x2, int y2, int value);
+        // int row_marker(int x1, int y1, int x2, int y2, int value);
 
-        int board_marker(int value);
+        // int board_marker(int value);
 
         int heuristic();
 
-        string server_output(pair<Board, vector<Move> > server_output_move);
+        // string server_output(pair<Board, vector<Move> > server_output_move);
 
-        pair<vector<Move>, int> min_tree(Board b, int player_index);
-        pair<vector<Move>, int> max_tree(Board b, int player_index);
+        // pair<vector<Move>, int> min_tree(Board b, int player_index);
+        // pair<vector<Move>, int> max_tree(Board b, int player_index);
 };
 
 int Board::get_ring1_removed(){
@@ -390,7 +372,7 @@ void Board::set_position(int x, int y, int value){
 
 vector<int> Board::startend(int x1, int y1, int x2, int y2, int value){
     vector<int> ls;
-    int k = markers_removed;
+    int k = markers_per_ring;
     ls.push_back(0);
     ls.push_back(0);
     ls.push_back(0);
@@ -490,7 +472,7 @@ vector<int> Board::startend(int x1, int y1, int x2, int y2, int value){
 
 vector<int> Board::moves_row(vector<int> ls){
     vector<int> vec;
-    int k = markers_removed;
+    int k = markers_per_ring;
     if(!((ls[0] == 0) && (ls[1] == 0) && (ls[2] == 0) && (ls[3] == 0))){
         int x = ls[2] - ls[0];
         int y = ls[3] - ls[1];
@@ -716,32 +698,32 @@ void Board::execute_move(vector<Move> movelist, int player_index){
                 else ring2_removed++;
             if(m1.y == m2.y){
                 if(m2.x > m1.x){
-                    for(int i = 0; i < markers_removed; i++)
+                    for(int i = 0; i < markers_per_ring; i++)
                         set_position(m1.x+i, m1.y, 0);
                 }
                 else{
-                    for(int i = 0; i < markers_removed; i++)
+                    for(int i = 0; i < markers_per_ring; i++)
                         set_position(m1.x-i, m1.y, 0);
                 }                
             }
             else if(m1.x == m2.x){
                 if(m2.y > m1.y){
-                    for(int i = 0; i < markers_removed; i++)
+                    for(int i = 0; i < markers_per_ring; i++)
                         set_position(m1.x, m1.y+i, 0);    
                 }
                 else{
-                    for(int i = 0; i < markers_removed; i++){
+                    for(int i = 0; i < markers_per_ring; i++){
                          set_position(m1.x, m1.y-i, 0);
                     }
                 }
             }
             else if(m2.y-m1.y == m2.x-m1.x){
                 if(m2.x > m1.x){
-                    for(int i = 0; i < markers_removed; i++)
+                    for(int i = 0; i < markers_per_ring; i++)
                         set_position(m1.x+i, m1.y+i, 0);
                 }
                 else{
-                    for(int i = 0; i < markers_removed; i++)
+                    for(int i = 0; i < markers_per_ring; i++)
                         set_position(m1.x-i,m1.y-i, 0);
                 }
             }
@@ -760,59 +742,6 @@ void Board::execute_move(vector<Move> movelist, int player_index){
         }
         
     }
-}
-
-
-
-
-pair<vector<Move>, int> Board::min_tree(Board b,int player_index){
-    // // code for terminal state
-    // int utility = 1001001010010;
-    // if(player_index == -1){
-    //     for(int i=0;i<player1_rings.size();i++){
-    //         for(int j=0;j<6;j++){
-    //             int k = 1;
-    //             int count = 0;
-    //             while(true){
-    //                 if(check_valid_position(player1_rings[i][0]+k*all_directions[2*j],player1_rings[i][1]+k*all_directions[2*j+1])==false)
-    //                     break;
-    //                 if(get_position(player1_rings[i][0]+k*all_directions[2*j],player1_rings[i][1]+k*all_directions[2*j+1]) == -2 ,2)break;
-    //                 if(get_position(player1_rings[i][0]+k*all_directions[2*j],player1_rings[i][1]+k*all_directions[2*j+1]) == -1 ,1){
-    //                     count = 1;
-    //                     continue;
-    //                 }
-    //                 Board temp_board(b);
-    //                 vector<Move> temp_move;
-    //                 Move m1("S", player1_rings[i][0], player1_rings[i][1]);
-    //                 Move m2("M", player1_rings[i][0]+k*all_directions[2*j], player1_rings[i][1]+k*all_directions[2*j+1]);
-    //                 temp_move.push_back(m1);
-    //                 temp_move.push_back(m2);
-    //                 temp_board.execute_move(temp_move,player_index);
-    //                 vector<int> all_consecutive = temp_board.cons_marker(player_index);
-    //                 if(all_consecutive.size() == 1)
-    //                     utility = min(utility,max_tree(temp_board,-1*player_index).second);
-    //                 else{
-    //                     for(int x=0;x<all_consecutive.size()/4;x++){
-    //                         Move temp_m1("RS",all_consecutive[4*x], all_consecutive[4*x+1]);
-    //                         Move temp_m2("RE",all_consecutive[4*x+2],all_consecutive[4*x+3]);
-    //                         for(int r=0;r<player1_rings.size();r++){
-    //                             Move temp_m3("X",player1_rings[r][0], player1_rings[r][1]);
-    //                             vector<Move> temp_temp_move;
-    //                             temp_temp_move.push_back(temp_m1);
-    //                             temp_temp_move.push_back(temp_m2);
-    //                             temp_temp_move.push_back(temp_m3);
-    //                             Board temp_temp_board(temp_board);
-    //                             temp_temp_board.execute_move(temp_temp_move,player_index);
-    //                             utility = min(utility, max_tree(temp_temp_board, -1*player_index).second);
-    //                         }
-    //                     }
-    //                 }
-                
-    //             }
-    //         }
-    //     }
-    
-    // }
 }
 
 
@@ -926,6 +855,7 @@ vector<vector<Move> > all_moves(Board bord,int player_index){
     return possible_moves;
 }
 
+
 pair<vector<Move>, int> maxxx_tree(Board b,int player_index, int depth);
 
 pair<vector<Move>, int> minnn_tree(Board b,int player_index,int depth){
@@ -961,6 +891,7 @@ pair<vector<Move>, int> maxxx_tree(Board b,int player_index, int depth){
         pair<vector<Move>, int> reee (mv,b.heuristic());
         return reee;
     }
+    
     vector<vector<Move> > possible_moves = all_moves(b,player_index);
     for(int i=0;i<possible_moves.size();i++){
         Board temp_board = Board(b);
@@ -972,7 +903,6 @@ pair<vector<Move>, int> maxxx_tree(Board b,int player_index, int depth){
     }
     pair<vector<Move> ,int> util(movereturn, utility);
     return util;
-
 }
 
 vector<Move> minimax(Board b,int player_index,int depth){
@@ -981,15 +911,200 @@ vector<Move> minimax(Board b,int player_index,int depth){
 }
 
 
+pair<vector<Move>, int> max_alpha(Board b,int player_index, int depth,int alpha,int beta);
+pair<vector<Move>, int> min_alpha(Board b,int player_index,int depth,int alpha,int beta){
+    int utility = 100010101;
+    vector<Move> movereturn;
+    if(depth == 0){
+        vector<Move> mv;
+        Move m("S",0,0);
+        mv.push_back(m);
+        pair<vector<Move> , int> reee (mv,b.heuristic());
+        return reee;
+    }
+    vector<vector<Move> > possible_moves = all_moves(b,player_index);
+    for(int i=0;i<possible_moves.size();i++){
+        Board temp_board = Board(b);
+        temp_board.execute_move(possible_moves[i],player_index);
+        if(utility > max_alpha(temp_board,-1*player_index,depth-1,alpha,beta).second){
+            movereturn = possible_moves[i];
+            utility = max_alpha(temp_board,-1*player_index,depth-1,alpha,beta).second;
+        }
+        beta = min(beta,utility);
+        pair<vector<Move>, int> util(movereturn,utility);
+        if(alpha >= beta) return util;
+    }
+    pair<vector<Move>, int> util(movereturn,utility);
+    return util;
+}
 
+pair<vector<Move>, int> max_alpha(Board b,int player_index, int depth,int alpha,int beta){
+    int utility = -1000000;
+    vector<Move> movereturn;
+    if(depth == 0){
+        vector<Move> mv;
+        Move m("S",0,0);
+        mv.push_back(m);
+        pair<vector<Move>, int> reee (mv,b.heuristic());
+        return reee;
+    }
+    
+    vector<vector<Move> > possible_moves = all_moves(b,player_index);
+    for(int i=0;i<possible_moves.size();i++){
+        Board temp_board = Board(b);
+        temp_board.execute_move(possible_moves[i],player_index);
+        if(utility < min_alpha(temp_board,-1*player_index,depth-1,alpha,beta).second){
+            movereturn = possible_moves[i];
+            utility = min_alpha(temp_board,-1*player_index,depth-1,alpha,beta).second;
+        }
+        alpha = max(alpha,utility);
+        pair<vector<Move>, int> util(movereturn, utility);
+        if(alpha >= beta)return util;
+    }
+    pair<vector<Move> ,int> util(movereturn, utility);
+    return util;
+}
+
+vector<Move> alpha_beta(Board b,int player_index,int depth,int alpha, int beta){
+    if(player_index == -1)return min_alpha(b,player_index,depth,alpha,beta).first;
+    else return max_alpha(b,player_index,depth,alpha,beta).first;
+}
+
+
+
+// it gives all length of given value in a row
+vector<int> Board::marker_coordinate_feature( int s1,int f1,int s2,int f2,int value){
+    vector<int> coord;
+    int x = s2-s1;
+    int y = f2-f1;
+    int diff = max(x,y);
+    int check = 0;
+    if(x != 0)x=1;
+    if(y != 0)y=1;
+    for(int i=0;i<=diff;i++){
+        int xcoord = s1+x*i;
+        int ycoord = f1+y*i;
+        
+        if(check == 0){
+            if(get_position(xcoord,ycoord) == value){
+                if(i==diff){
+                    coord.push_back(s2);
+                    coord.push_back(f2);
+                    coord.push_back(s2);
+                    coord.push_back(f2);
+                    continue;
+                }
+            
+                coord.push_back(xcoord);
+                coord.push_back(ycoord);
+                check = 1;
+                continue;
+            }
+        }
+        if(check == 1){
+            if(get_position(xcoord,ycoord) != value){
+                coord.push_back(xcoord-x);
+                coord.push_back(ycoord-y);
+                check = 0;
+                continue;
+            }
+            if(i == diff){
+                coord.push_back(s2);
+                coord.push_back(f2);
+            }
+        }
+    }
+    if(coord.size()==0)coord.push_back(0);
+    return coord;
+}
+// it gives the number of sets of 1,2,3 to board_size-1
+vector<int> Board::marker_set(int s1,int f1, int s2, int f2, int value){
+    vector<int> coord = marker_coordinate_feature(s1,f1,s2,f2,value);
+    int n = markers_per_ring;
+    vector<int> marker_fet(n,0);
+    if(coord.size()==1)return marker_fet;
+    for(int i=0;i<coord.size()/4;i++){
+        int ydiff = coord[i+3] - coord[i+1];
+        int xdiff = coord[i+2] - coord[i];
+        int size = max(xdiff,ydiff)+1;
+        if(size>=n-1)marker_fet[n-1] += 1;
+        else marker_fet[size] += 1;
+    }
+    return marker_fet;
+}
+
+vector<int> Board::total_marker_sets(int value){
+    int size = board_size;
+    vector<vector<int> > endpts = end_pts(size);
+    int n = markers_per_ring;
+    vector<int> marker_feat(n,0);
+    for(int i=0;i<endpts.size();i++){
+        vector<int> temp = marker_set(endpts[i][0],endpts[i][1],endpts[i][2],endpts[i][3],value);
+        for(int j=1;j<n;j++)
+            marker_feat[j] += temp[j];
+    }
+    return marker_feat;
+}
+
+int eval(vector<int> feat){
+    int n = feat.size();
+    int score;
+    if(n==5){
+        score = feat[1]*1+feat[2]*3+feat[3]*25+feat[4]*300;
+    }
+    if(n==6){
+        score = feat[1]*1+feat[2]*3+feat[3]*25+feat[4]*300+feat[5]*4000;
+    }
+    return score;
+}
+
+// include line number 24 for this function
+// this function gives the number of moves of given player
+int Board::num_moves(int player_index){
+    vector<vector<int> > player_rings;
+    if(player_index == -1)player_rings = player1_rings;
+    else player_rings = player2_rings;
+    int moves_num=0;
+    for(int i=0;i<player_rings.size();i++){
+        int prx = player_rings[i][0];
+        int pry = player_rings[i][1];
+        for(int j=0;j<6;j++){
+            // int count=0;
+            bool check = true;
+            int k=1;
+            while(true){
+                int a = prx+k*all_directions[2*j];
+                int b = pry+k*all_directions[2*j+1];
+                if(check_valid_position(a,b) == false)break;
+                if(get_position(a,b) == -2 || get_position(a,b) == 2)break;
+                if(get_position(a,b) == -1 || get_position(a,b) == 1){
+                    check = false;
+                    k++;
+                    continue;
+                }
+                moves_num++;
+                if(check == false)break;
+                k++;
+            }
+            // moves_num += count;
+        }
+    }
+    return moves_num;
+}
 
 // heuristic is like positive value when player2 has higher value
 int Board::heuristic(){
-    // int score = board_marker(1) - board_marker(-1);
-    int score = 1000*(ring2_removed - ring1_removed);
-    score += 10*(marker2 - marker1);
+    // int score = 1000*(ring2_removed - ring1_removed);
+    // score += 10*(marker2 - marker1);
+    vector<int> feature1 = total_marker_sets(-1);
+    vector<int> feature2 = total_marker_sets(1);
+    int score = eval(feature2) - eval(feature1);
+    score += 10000*(ring2_removed - ring1_removed);
+    score += 1000*(num_moves(1) - num_moves(-1));
     return score;
 }
+
+
 //////////////////////////////////
 
 void Board::print_board(){
@@ -1022,43 +1137,15 @@ void Board::print_board(){
     cout << "player 1 rings removed: " << ring1_removed << '\n' << "player 2 rings removed: " << ring2_removed << '\n' << '\n';
 }
 
-// int main1(){
-//     ifstream infile("thefile.txt");
-//     string line;
-//     Board myBoard = Board(5,5,3);
-//     int player_number = -1;
-//     while (getline(infile, line))
-//     {
-//         vector<Move> movvllist = movlist(line);
-//         myBoard.execute_move(movvllist, player_number);    
-        
-//         player_number *= -1;
-//     }
-//     myBoard.print_board();
-//     cout << player_number << endl;
-    
-//     vector<int> consmark = myBoard.cons_marker(player_number);
-    
-//     for(int i=0;i<consmark.size();i++)
-//         cout << consmark[i] << " ";
-
-//     cout << all_directions.size() << endl;
-//     // for(int i=0;i<all_directions.size();i++)
-//     //     cout << all_directions[i] << "  ";
-
-//     vector<vector<Move> > successor = all_moves(myBoard,player_number);
-    
-    
-//     for(int i=0;i<successor.size();i++){
-//         for(int j=0;j<successor[i].size();j++){
-//             cout << successor[i][j].move_type << " " << successor[i][j].x << " " << successor[i][j].y << " ";
-//         }
-//         cout << endl;
-//     }
-//     cout  << "Player index is " << player_number << "  " <<  successor.size() << " size successor\n";
-//     return 0;
-// }
-
+// possible features
+// a). 2 in a row
+// b). 3 in a row
+// c). 4 in a row
+// d). 5 in a row
+// e). 4 in a row and ring next to it
+// f). 5 in a row including ring
+// g). In 5 consecutive 4 are of my markers and 1 is ring
+// h). reduce number of possible moves for opponent
 
 int main(){
     int player_number;
@@ -1066,57 +1153,12 @@ int main(){
     int game_time;
     int k;
     
-
-    
-
-    // string game_data;
-    // getline(cin, game_data);
-
-    // vector<string> game_data_vector;
-
-    // stringstream data(game_data);
-    // string line;
-
-    // while(getline(data,line,' ')){
-    //     game_data_vector.push_back(line);
-    // }
-
-    // int player_number;
-
-    // if(stoi(game_data_vector[0]) == 1){ player_number = -1;}
-    // else{player_number = 1;}
-    
-    // int number_of_rings = stoi(game_data_vector[1]);
-    // int game_time = stoi(game_data_vector[2]);
-
-    // Board my_board = Board(5,number_of_rings,3);
-
-
-
-
-
-
     cin >> player_number >> n >> game_time >> k;
     if(player_number == 1)player_number = -1;
     else {player_number = 1;}
     cin.ignore();
     Board my_board = Board(n,n,k);
 
-    // player_number = 1;
-    // Board my_board = Board(5,3,3);
-    // Move ma("P",2,2);
-    // vector<Move> mlist;
-    // mlist.push_back(ma);
-    // cout << mov_string(mlist) << endl;
-
-    // string opp = "P 4 8";
-    // vector<Move> opp_move = movlist(opp);
-    // my_board.execute_move(opp_move,-1);
-    // my_board.print_board();
-    // return 0;
-
-
-    
 
     string opponent_move;
     // opponent is player1
@@ -1150,7 +1192,8 @@ int main(){
     // cout << "11";
     int x = 0;
     while(x<10){
-        vector<Move> next_move = minimax(my_board,player_number,2);
+        vector<Move> next_move = alpha_beta(my_board,player_number,2,-10000000,10000000);
+        // vector<Move> next_move = minimax(my_board,player_number,3);
         my_board.execute_move(next_move,player_number);
         cout << mov_string(next_move) << endl;
 
@@ -1160,7 +1203,8 @@ int main(){
         x++;
     }
     while(true){
-        vector<Move> next_move = minimax(my_board,player_number,3);
+        vector<Move> next_move = alpha_beta(my_board,player_number,2,-10000000,10000000);
+        // vector<Move> next_move = minimax(my_board,player_number,3,);
         my_board.execute_move(next_move,player_number);
         cout << mov_string(next_move) << endl;
 
