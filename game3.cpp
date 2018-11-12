@@ -213,6 +213,7 @@ double time_startend=0;
 double time_moves_row=0;
 double time_is_marker5=0;
 
+
 vector<string> splitstr(string str, char dl){
     string word = "";
     int num = 0;
@@ -390,7 +391,7 @@ int Board::get_ring1_removed(){
 int Board::get_ring2_removed(){
     return ring2_removed;
 }
-
+vector<vector<Move>> all_moves_aa(Board bord,int player_index);
 Board Board::copy_board(){
 
     clock_t t9 = clock();
@@ -1081,7 +1082,7 @@ pair<vector<vector<Move> >,vector<Board> >all_moves(Board bord,int player_index)
                 }
                 // if(temp_board.is_marker5(prx,pry,player_index) == true){
                     if(is_exist5 == true){
-                    cerr << temp_board.is_marker5(prx,pry,player_index);
+                    // cerr << temp_board.is_marker5(prx,pry,player_index);
 
                 vector<int> all_consecutive = temp_board.cons_marker(player_index);
                 clock_t t8 = clock();
@@ -1221,7 +1222,7 @@ pair<vector<vector<Move> >,vector<Board> >all_moves_exp(Board b,int player_index
                 k++;
 
                 if(temp_board.is_marker5(prx,pry,player_index) == true){
-                    cerr << temp_board.is_marker5(prx,pry,player_index);
+                    // cerr << temp_board.is_marker5(prx,pry,player_index);
 
                 vector<int> all_consecutive = temp_board.cons_marker(player_index);
                 clock_t t8 = clock();
@@ -1329,7 +1330,7 @@ pair<vector<vector<Move> >,vector<Board> >all_moves_exp(Board b,int player_index
                 k++;
 
                 if(temp_board.is_marker5(prx,pry,player_index) == true){
-                    cerr << temp_board.is_marker5(prx,pry,player_index);
+                    // cerr << temp_board.is_marker5(prx,pry,player_index);
 
                 vector<int> all_consecutive = temp_board.cons_marker(player_index);
                 clock_t t8 = clock();
@@ -1388,61 +1389,125 @@ pair<vector<vector<Move> >,vector<Board> >all_moves_exp(Board b,int player_index
 
 }
 
+vector<vector<Move> > all_moves_aa(Board bord,int player_index){
+    vector<vector<Move> > possible_moves;
+    vector<vector<int> > player_rings;
+    Board b = Board(bord);
+    vector<int> consecutive_init = b.cons_marker(player_index);
+    vector<Move> init_move;
+    if(consecutive_init.size() != 1){
+        // clock_t t3 = clock();
+        Move rem_ini("RS",consecutive_init[0],consecutive_init[1]);
+        Move rem_end("RE",consecutive_init[2],consecutive_init[3]);
+        Move rem_ring("X",b.player1_rings[0][0],b.player1_rings[0][1]);
+        if(player_index == 1){
+            rem_ring.x = b.player2_rings[0][0];
+            rem_ring.y = b.player2_rings[0][1];        
+        }
+        init_move.push_back(rem_ini);
+        init_move.push_back(rem_end);
+        init_move.push_back(rem_ring);
+        b.execute_move(init_move,player_index);
 
-// pair<vector<Move>, int> maxxx_tree(Board b,int player_index, int depth);
+        int r;
+        if(player_index == -1)r = b.get_ring1_removed();
+        else r = b.get_ring2_removed();
+        if(r == 3){
+            possible_moves.push_back(init_move);
+            return possible_moves;
+        }
+    }
+    if(player_index == -1)player_rings = b.player1_rings;
+    else {
+        player_rings = b.player2_rings;
+    }
 
-// pair<vector<Move>, int> minnn_tree(Board b,int player_index,int depth){
-//     int utility = 100010101;
-//     vector<Move> movereturn;
-//     if(depth == 0){
-//         vector<Move> mv;
-//         Move m("S",0,0);
-//         mv.push_back(m);
-//         pair<vector<Move> , int> reee (mv,b.heuristic());
-//         return reee;
-//     }
-//     vector<vector<Move> > possible_moves = all_moves(b,player_index);
-//     for(int i=0;i<possible_moves.size();i++){
-//         Board temp_board = Board(b);
-//         temp_board.execute_move(possible_moves[i],player_index);
-//         if(utility > maxxx_tree(temp_board,-1*player_index,depth-1).second){
-//             movereturn = possible_moves[i];
-//             utility = maxxx_tree(temp_board,-1*player_index,depth-1).second;
-//         }
-//     }
-//     pair<vector<Move>, int> util(movereturn,utility);
-//     return util;
-// }
+    for(int i=0;i<player_rings.size();i++){
+        
+        int prx = player_rings[i][0];
+        int pry = player_rings[i][1];
+        for(int j=0;j<6;j++){
+            
+            int k=1;
+            int count=0;
+            while(true){
+                clock_t t7 = clock();
+                int x = prx+k*all_directions[2*j];
+                int y = pry+k*all_directions[(2*j)+1];
 
-// pair<vector<Move>, int> maxxx_tree(Board b,int player_index, int depth){
-//     int utility = -1000000;
-//     vector<Move> movereturn;
-//     if(depth == 0){
-//         vector<Move> mv;
-//         Move m("S",0,0);
-//         mv.push_back(m);
-//         pair<vector<Move>, int> reee (mv,b.heuristic());
-//         return reee;
-//     }
-    
-//     vector<vector<Move> > possible_moves = all_moves(b,player_index);
-//     for(int i=0;i<possible_moves.size();i++){
-//         Board temp_board = Board(b);
-//         temp_board.execute_move(possible_moves[i],player_index);
-//         if(utility < minnn_tree(temp_board,-1*player_index,depth-1).second){
-//             movereturn = possible_moves[i];
-//             utility = minnn_tree(temp_board,-1*player_index,depth-1).second;
-//         }
-//     }
-//     pair<vector<Move> ,int> util(movereturn, utility);
-//     return util;
-// }
+                if(b.check_valid_position(x,y)==false)break;
 
-// vector<Move> minimax(Board b,int player_index,int depth){
-//     if(player_index == -1)return minnn_tree(b,player_index,depth).first;
-//     else return maxxx_tree(b,player_index,depth).first;
-// }
+                if(b.get_position(x,y) == -2)break;
+                if(b.get_position(x,y) == 2)break;
 
+                if(b.get_position(x,y) == -1 || b.get_position(x,y) == 1){
+                    count = 1;
+                    k++;
+                    continue;
+                }
+
+                // Board temp_board = b.copy_board();
+                Board temp_board = Board(b);
+                vector<Move> temp_move = init_move;
+                Move m1("S", prx, pry);
+                Move m2("M", x, y);
+                temp_move.push_back(m1);
+                temp_move.push_back(m2);
+                temp_board.execute_move(temp_move,player_index);
+
+                k++;
+                bool is_exist5 = false;
+                int xchange = x-prx;
+                int ychange = y-pry;
+                int size = max(abs(xchange),abs(ychange));
+                int xcc=0;int ycc=0;
+                if(xchange != 0)xcc=xchange/abs(xchange);
+                if(ychange != 0)ycc=ychange/abs(ychange);
+                for(int l=0;l<=size;l++){
+                    is_exist5 = temp_board.is_marker5(prx+l*xcc,pry+l*ycc,player_index);
+                    if(is_exist5 == true)break;
+                }
+                // if(temp_board.is_marker5(prx,pry,player_index) == true){
+                if(is_exist5 == true){
+
+                    vector<int> all_consecutive = temp_board.cons_marker(player_index);
+                    clock_t t8 = clock();
+                    time_allmoves4 += (double)(t8-t7)/CLOCKS_PER_SEC;
+                    if(all_consecutive.size() == 1){
+                        possible_moves.push_back(temp_move);
+                    }
+                
+
+                    else{
+                        for(int x=0;x<all_consecutive.size()/4;x++){
+                            Move temp_m1("RS", all_consecutive[4*x], all_consecutive[4*x+1]);
+                            Move temp_m2("RE", all_consecutive[4*x+2], all_consecutive[4*x+3]);
+                            vector<vector<int> > play_rings;
+                            if(player_index==-1)play_rings = temp_board.player1_rings;
+                            else play_rings = temp_board.player2_rings;
+                            for(int r=0;r<play_rings.size();r++){
+                                Move temp_m3("X", play_rings[r][0], play_rings[r][1]);
+                                vector<Move> temp_temp_move;
+                                Board temp_temp_board = temp_board.copy_board();
+                                temp_temp_move.push_back(m1);
+                                temp_temp_move.push_back(m2);
+                                temp_temp_move.push_back(temp_m1);
+                                temp_temp_move.push_back(temp_m2);
+                                temp_temp_move.push_back(temp_m3);
+                                temp_temp_board.execute_move(temp_temp_move,player_index);
+                                possible_moves.push_back(temp_temp_move);
+                            }
+                        }
+                    }
+
+                }
+                else{possible_moves.push_back(temp_move);}
+                if(count==1)break; 
+            }
+        }
+    }
+    return possible_moves;
+}
 
 pair<vector<Move>, int> max_alpha(Board b,int player_index, int depth,int alpha,int beta);
 pair<vector<Move>, int> min_alpha(Board b,int player_index,int depth,int alpha,int beta){
@@ -1517,6 +1582,79 @@ vector<Move> alpha_beta(Board b,int player_index,int depth,int alpha, int beta){
     if(player_index == -1)return min_alpha(b,player_index,depth,alpha,beta).first;
     else return max_alpha(b,player_index,depth,alpha,beta).first;
 }
+
+
+
+pair<vector<Move>, int> max_alpha1(Board b,int player_index, int depth,int alpha,int beta);
+pair<vector<Move>, int> min_alpha1(Board b,int player_index,int depth,int alpha,int beta){
+    call_min_alpha ++;
+    clock_t t1 = clock();
+    // int utility = 100010101;
+    vector<Move> movereturn;
+    if(depth == 0){
+        vector<Move> mv;
+        Move m("S",0,0);
+        mv.push_back(m);
+        pair<vector<Move> , int> reee (mv,b.heuristic());
+        return reee;
+    }
+    vector<vector<Move> > possible_moves = all_moves_aa(b,player_index);
+    for(int i=0;i<possible_moves.size();i++){
+        vector<Move> temp_move = possible_moves[i];
+        Board temp_board = b.copy_board();
+        temp_board.execute_move(possible_moves[i],player_index);
+        pair<vector<Move>, int> child = max_alpha(temp_board,-1*player_index,depth-1,alpha,beta);
+        if(beta > child.second){
+            movereturn = possible_moves[i];
+            beta = child.second;
+        }
+        pair<vector<Move>, int> util(movereturn,beta);
+        if(alpha >= beta) return util;
+    }
+    pair<vector<Move>, int> util(movereturn,beta);
+    return util;
+}
+
+pair<vector<Move>, int> max_alpha1(Board b,int player_index, int depth,int alpha,int beta){
+    vector<Move> movereturn;
+    if(depth == 0){
+        vector<Move> mv;
+        Move m("S",0,0);
+        mv.push_back(m);
+        pair<vector<Move>, int> reee (mv,b.heuristic());
+        return reee;
+    }
+    
+    vector<vector<Move> > successor = all_moves_aa(b,player_index);
+    for(int i=0;i<successor.size();i++){
+        vector<Move> temp_move = successor[i];
+        Board temp_board = b.copy_board();
+        temp_board.execute_move(successor[i],player_index);
+        pair<vector<Move>, int> child = min_alpha(temp_board,-1*player_index,depth-1,alpha,beta);
+        if(alpha < child.second){
+            movereturn = successor[i];
+            alpha = child.second;
+        }
+        pair<vector<Move>, int> util(movereturn, alpha);
+        if(alpha >= beta)return util;
+    }
+    pair<vector<Move> ,int> util(movereturn, alpha);
+    return util;
+}
+
+vector<Move> alpha_beta1(Board b,int player_index,int depth,int alpha, int beta){
+    if(player_index == -1)return min_alpha(b,player_index,depth,alpha,beta).first;
+    else return max_alpha(b,player_index,depth,alpha,beta).first;
+}
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1624,7 +1762,35 @@ vector<int> Board::total_marker_sets_h(int value){
     return marker_feat;
 }
 
+void Board::print_board(){
 
+    cout << "   " << "     " << " " << "     " << " " << " " << endl;
+    cout << " " << "     " << " " << "     " << print_position(-1,4) << "     " << print_position(1,5) << endl;
+    cout << "   " << "     " << " " << print_position(-2,3) << "     " << print_position(0,4) << "     " << print_position(2,5) << endl;
+    cout << " " << "     " << print_position(-3,2) << "     " << print_position(-1,3) << "     " << print_position(1,4) << "     " << print_position(3,5) << endl;
+    cout << "   " << print_position(-4,1) << "     " << print_position(-2,2) << "     " << print_position(0,3) << "     " << print_position(2,4) << "     " << print_position(4,5) << endl;
+    cout << " " << "     " << print_position(-3,1) << "     " << print_position(-1,2) << "     " << print_position(1,3) << "     " << print_position(3,4) << "     " << " " << endl;
+    cout << "   " << print_position(-4,0) << "     " << print_position(-2,1) << "     " << print_position(0,2) << "     " << print_position(2,3) << "     " << print_position(4,4) << endl;
+    cout << print_position(-5,-1) << "     " << print_position(-3,0) << "     " << print_position(-1,1) << "     " << print_position(1,2) << "     " << print_position(3,3) << "     " << print_position(5,4) << endl;
+    cout << "   " << print_position(-4,-1) << "     " << print_position(-2,0) << "     " << print_position(0,1) << "     " << print_position(2,2) << "     " << print_position(4,3) << endl;
+    cout << print_position(-5,-2) << "     " << print_position(-3,-1) << "     " << print_position(-1,0) << "     " << print_position(1,1) << "     " << print_position(3,2) << "     " << print_position(5,3) << endl;
+    cout << "   " << print_position(-4,-2) << "     " << print_position(-2,-1) << "     " << print_position(0,0) << "     " << print_position(2,1) << "     " << print_position(4,2) << endl;
+    cout << print_position(-5,-3) << "     " << print_position(-3,-2) << "     " << print_position(-1,-1) << "     " << print_position(1,0) << "     " << print_position(3,1) << "     " << print_position(5,2) << endl;
+    cout << "   " << print_position(-4,-3) << "     " << print_position(-2,-2) << "     " << print_position(0,-1) << "     " << print_position(2,0) << "     " << print_position(4,1) << endl;
+    cout << print_position(-5,-4) << "     " << print_position(-3,-3) << "     " << print_position(-1,-2) << "     " << print_position(1,-1) << "     " << print_position(3,0) << "     " << print_position(5,1) << endl;
+    cout << "   " << print_position(-4,-4) << "     " << print_position(-2,-3) << "     " << print_position(0,-2) << "     " << print_position(2,-1) << "     " << print_position(4,0) << endl;
+    cout << " " << "     " << print_position(-3,-4) << "     " << print_position(-1,-3) << "     " << print_position(1,-2) << "     " << print_position(3,-1) << "     " << " " << endl;
+    cout << "   " << print_position(-4,-5) << "     " << print_position(-2,-4) << "     " << print_position(0,-3) << "     " << print_position(2,-2) << "     " << print_position(4,-1) << endl;
+    cout << " " << "     " << print_position(-3,-5) << "     " << print_position(-1,-4) << "     " << print_position(1,-3) << "     " << print_position(3,-2) << endl;
+    cout << "   " << " " << "     " << print_position(-2,-5) << "     " << print_position(0,-4) <<  "     " << print_position(2,-3) <<endl;
+    cout << " " << "     " << " " << "     " << print_position(-1,-5) << "     " << print_position(1,-4) << endl;
+    cout << "   " << "     " << " " << "     " << " " << " " << endl;
+
+    cout << '\n';
+    cout << "player 1 rings: " << ring1 << '\n' << "player 2 rings: " << ring2 << '\n';
+    cout << "player 1 markers: " << marker1 << '\n' << "player 2 markers: " << marker2 << '\n';
+    cout << "player 1 rings removed: " << ring1_removed << '\n' << "player 2 rings removed: " << ring2_removed << '\n' << '\n';
+}
 
 
 int eval(vector<int> feat){
@@ -1679,8 +1845,8 @@ int Board::heuristic(){
     // score += 10*(marker2 - marker1);
     call_heuristic++;
     clock_t t1 = clock();
-    vector<int> feature1 = total_marker_sets_h(-1);
-    vector<int> feature2 = total_marker_sets_h(1);
+    vector<int> feature1 = total_marker_sets(-1);
+    vector<int> feature2 = total_marker_sets(1);
     int score = eval(feature2) - eval(feature1);
     score += 10000*(ring2_removed - ring1_removed);
     // score += 1000*(num_moves(1) - num_moves(-1));
@@ -1691,37 +1857,10 @@ int Board::heuristic(){
 }
 
 
+
 //////////////////////////////////
 
-void Board::print_board(){
 
-    cout << "   " << "     " << " " << "     " << " " << " " << endl;
-    cout << " " << "     " << " " << "     " << print_position(-1,4) << "     " << print_position(1,5) << endl;
-    cout << "   " << "     " << " " << print_position(-2,3) << "     " << print_position(0,4) << "     " << print_position(2,5) << endl;
-    cout << " " << "     " << print_position(-3,2) << "     " << print_position(-1,3) << "     " << print_position(1,4) << "     " << print_position(3,5) << endl;
-    cout << "   " << print_position(-4,1) << "     " << print_position(-2,2) << "     " << print_position(0,3) << "     " << print_position(2,4) << "     " << print_position(4,5) << endl;
-    cout << " " << "     " << print_position(-3,1) << "     " << print_position(-1,2) << "     " << print_position(1,3) << "     " << print_position(3,4) << "     " << " " << endl;
-    cout << "   " << print_position(-4,0) << "     " << print_position(-2,1) << "     " << print_position(0,2) << "     " << print_position(2,3) << "     " << print_position(4,4) << endl;
-    cout << print_position(-5,-1) << "     " << print_position(-3,0) << "     " << print_position(-1,1) << "     " << print_position(1,2) << "     " << print_position(3,3) << "     " << print_position(5,4) << endl;
-    cout << "   " << print_position(-4,-1) << "     " << print_position(-2,0) << "     " << print_position(0,1) << "     " << print_position(2,2) << "     " << print_position(4,3) << endl;
-    cout << print_position(-5,-2) << "     " << print_position(-3,-1) << "     " << print_position(-1,0) << "     " << print_position(1,1) << "     " << print_position(3,2) << "     " << print_position(5,3) << endl;
-    cout << "   " << print_position(-4,-2) << "     " << print_position(-2,-1) << "     " << print_position(0,0) << "     " << print_position(2,1) << "     " << print_position(4,2) << endl;
-    cout << print_position(-5,-3) << "     " << print_position(-3,-2) << "     " << print_position(-1,-1) << "     " << print_position(1,0) << "     " << print_position(3,1) << "     " << print_position(5,2) << endl;
-    cout << "   " << print_position(-4,-3) << "     " << print_position(-2,-2) << "     " << print_position(0,-1) << "     " << print_position(2,0) << "     " << print_position(4,1) << endl;
-    cout << print_position(-5,-4) << "     " << print_position(-3,-3) << "     " << print_position(-1,-2) << "     " << print_position(1,-1) << "     " << print_position(3,0) << "     " << print_position(5,1) << endl;
-    cout << "   " << print_position(-4,-4) << "     " << print_position(-2,-3) << "     " << print_position(0,-2) << "     " << print_position(2,-1) << "     " << print_position(4,0) << endl;
-    cout << " " << "     " << print_position(-3,-4) << "     " << print_position(-1,-3) << "     " << print_position(1,-2) << "     " << print_position(3,-1) << "     " << " " << endl;
-    cout << "   " << print_position(-4,-5) << "     " << print_position(-2,-4) << "     " << print_position(0,-3) << "     " << print_position(2,-2) << "     " << print_position(4,-1) << endl;
-    cout << " " << "     " << print_position(-3,-5) << "     " << print_position(-1,-4) << "     " << print_position(1,-3) << "     " << print_position(3,-2) << endl;
-    cout << "   " << " " << "     " << print_position(-2,-5) << "     " << print_position(0,-4) <<  "     " << print_position(2,-3) <<endl;
-    cout << " " << "     " << " " << "     " << print_position(-1,-5) << "     " << print_position(1,-4) << endl;
-    cout << "   " << "     " << " " << "     " << " " << " " << endl;
-
-    cout << '\n';
-    cout << "player 1 rings: " << ring1 << '\n' << "player 2 rings: " << ring2 << '\n';
-    cout << "player 1 markers: " << marker1 << '\n' << "player 2 markers: " << marker2 << '\n';
-    cout << "player 1 rings removed: " << ring1_removed << '\n' << "player 2 rings removed: " << ring2_removed << '\n' << '\n';
-}
 
 // possible features
 // a). 2 in a row
@@ -1756,6 +1895,7 @@ int main(){
 
 
     for(int i=0;i<n;i++){
+        srand(time(0));
         int x = rand()%(n+1) - n;
         int y = rand()%(n+1) - n;
         
@@ -1777,17 +1917,17 @@ int main(){
     
     // cout << "11";
     int x = 0;
-    // while(x<10){
-    //     vector<Move> next_move = alpha_beta(my_board,player_number,3,-10000000,10000000);
-    //     // vector<Move> next_move = minimax(my_board,player_number,3);
-    //     my_board.execute_move(next_move,player_number);
-    //     cout << mov_string(next_move) << endl;
+    while(x<5){
+        vector<Move> next_move = alpha_beta(my_board,player_number,2,-10000000,10000000);
+        // vector<Move> next_move = minimax(my_board,player_number,3);
+        my_board.execute_move(next_move,player_number);
+        cout << mov_string(next_move) << endl;
 
-    //     getline(cin,opponent_move);
-    //     vector<Move> opp_move = movlist(opponent_move);
-    //     my_board.execute_move(opp_move,-1*player_number);
-    //     x++;
-    // }
+        getline(cin,opponent_move);
+        vector<Move> opp_move = movlist(opponent_move);
+        my_board.execute_move(opp_move,-1*player_number);
+        x++;
+    }
     while(true){
         vector<Move> next_move = alpha_beta(my_board,player_number,2,-10000000,10000000);
         // vector<Move> next_move = minimax(my_board,player_number,3,);
@@ -1797,33 +1937,6 @@ int main(){
         getline(cin,opponent_move);
         vector<Move> opp_move = movlist(opponent_move);
         my_board.execute_move(opp_move,-1*player_number);
-
-        cerr << "time_execute  " << time_execute << "\n";
-        cerr << "time_allmoves  " << time_allmoves << "\n";
-        cerr << "time_min_alpha  " << time_min_alpha << "\n";
-        cerr << "time_max_alpha  " << time_max_alpha << "\n";
-        cerr << "time_heuristic  " << time_heuristic << "\n";
-        cerr << "time_cons_marker  " << time_cons_marker << "\n";
-        cerr << "call_allmoves  " << call_allmoves << "\n";
-        cerr << "call_execute  " << call_execute << "\n";
-        cerr << "call_heuristic  " << call_heuristic << "\n";
-        cerr << "call_max_alpha  " << call_max_alpha << "\n";
-        cerr << "call_min_alpha  " << call_min_alpha << "\n";
-        cerr << "call_cons_marker  " << call_cons_marker << "\n";
-        cerr << "time_allmoves1  " << time_allmoves1 << "\n";
-        cerr << "time_allmoves2  " << time_allmoves2 << "\n";
-        cerr << "time_allmoves3  " << time_allmoves3 << "\n";
-        cerr << "time_allmoves4  " << time_allmoves4 << "\n";
-        cerr << "timecopy " << time_copy << "\n";
-        cerr << "time_end_pts " << time_end_pts << "\n";
-        cerr << "time_startend " << time_startend << "\n";
-        cerr << "times_moves_row " << time_moves_row << "\n";
-        cerr << "call_start_end " << call_startend << "\n";
-        cerr << "time_is_marker5  "  << time_is_marker5 << "\n";
-        cerr << "call_is_marker5 "  << call_is_marker5 << "\n";
-//         double time_end_pts=0;
-// double time_startend=0;
-// double time_moves_row=0;
     }
     
 
