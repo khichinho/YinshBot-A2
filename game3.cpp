@@ -1703,6 +1703,13 @@ vector<int> Board::marker_coordinate_feature( int s1,int f1,int s2,int f2,int va
     if(coord.size()==0)coord.push_back(0);
     return coord;
 }
+
+bool is_gap(int s1,int f1,int s2,int f2){
+    if(abs(f2-f1)==2)return true;
+    if(abs(s2-s1)==2)return true;
+}
+
+
 // it gives the number of sets of 1,2,3 to board_size-1
 vector<int> Board::marker_set(int s1,int f1, int s2, int f2, int value){
     vector<int> coord = marker_coordinate_feature(s1,f1,s2,f2,value);
@@ -1793,14 +1800,16 @@ void Board::print_board(){
 }
 
 
+
+
 int eval(vector<int> feat){
     int n = feat.size();
     int score;
     if(n==5){
-        score = feat[1]*1+feat[2]*3+feat[3]*25+feat[4]*1000;
+        score = feat[1]*3+feat[2]*80+feat[3]*850+feat[4]*10000;
     }
     if(n==6){
-        score = feat[1]*1+feat[2]*3+feat[3]*25+feat[4]*300+feat[5]*4000;
+        score = feat[1]*3+feat[2]*85+feat[3]*850+feat[4]*10000+feat[5]*85000;
     }
     return score;
 }
@@ -1843,22 +1852,15 @@ int Board::num_moves(int player_index){
 int Board::heuristic(){
     // int score = 1000*(ring2_removed - ring1_removed);
     // score += 10*(marker2 - marker1);
-    call_heuristic++;
-    clock_t t1 = clock();
+
     vector<int> feature1 = total_marker_sets(-1);
     vector<int> feature2 = total_marker_sets(1);
     int score = eval(feature2) - eval(feature1);
-    score += 10000*(ring2_removed - ring1_removed);
-    // score += 1000*(num_moves(1) - num_moves(-1));
+    score += 800000*(ring2_removed - ring1_removed);
+    score += 10*(num_moves(1) - num_moves(-1));
     
-    clock_t t2 = clock();
-    time_heuristic += (double)(t2-t1)/CLOCKS_PER_SEC;
     return score;
 }
-
-
-
-//////////////////////////////////
 
 
 
@@ -1896,14 +1898,36 @@ int main(){
 
     for(int i=0;i<n;i++){
         srand(time(0));
-        int x = rand()%(n+1) - n;
-        int y = rand()%(n+1) - n;
-        
-        while(my_board.check_valid_position(x,y)==false || my_board.get_position(x,y)!=0){
-            x = rand()%(n+1) - n;
-            y = rand()%(n+1) - n;
+        // int x = rand()%(n+1) - n;
+        // int y = rand()%(n+1) - n;
+        int hex=rand()%4;
+        int ind=rand()%4;
+        int mul = rand()%4;
+        while(mul*ind >= 6*hex){
+            hex=rand()%3;
+            ind=rand()%3;
+            mul = rand()%3;
         }
-        Move m("P",x,y);
+
+        vector<int> coord=map_hex_mysys(hex,ind*mul);
+        // while(my_board.check_valid_position(x,y)==false || my_board.get_position(x,y)!=0){
+        //     x = rand()%(n+1) - n;
+        //     y = rand()%(n+1) - n;
+        // }
+        while(my_board.check_valid_position(coord[0],coord[1]) ==false || my_board.get_position(coord[0],coord[1]) !=0){
+            hex = rand()%3;
+            ind = rand()%3;
+            mul = rand()%3;
+            // coord = map_hex_mysys(hex,ind*)
+            while(mul*ind >= 6*hex){
+                hex=rand()%3;
+                ind=rand()%3;
+                mul = rand()%3;
+            }
+            coord = map_hex_mysys(hex,ind*mul);
+        }
+        // Move m("P",x,y);
+        Move m("P",coord[0],coord[1]);
         vector<Move> next_move;
         next_move.push_back(m);
         my_board.execute_move(next_move,player_number);
@@ -1914,31 +1938,48 @@ int main(){
         vector<Move> opp_move = movlist(opponent_move);
         my_board.execute_move(opp_move,-1*player_number);
     }
-    
-    // cout << "11";
+
     int x = 0;
-    while(x<5){
-        vector<Move> next_move = alpha_beta(my_board,player_number,2,-10000000,10000000);
-        // vector<Move> next_move = minimax(my_board,player_number,3);
-        my_board.execute_move(next_move,player_number);
-        cout << mov_string(next_move) << endl;
+    if(n == 6){
+        // int x=0;
+        // while(x<10){
+        //     vector<Move> next_move = alpha_beta(my_board,player_number,2,-10000000,10000000);
+        //     // vector<Move> next_move = minimax(my_board,player_number,3,);
+        //     my_board.execute_move(next_move,player_number);
+        //     cout << mov_string(next_move) << endl;
 
-        getline(cin,opponent_move);
-        vector<Move> opp_move = movlist(opponent_move);
-        my_board.execute_move(opp_move,-1*player_number);
-        x++;
-    }
-    while(true){
-        vector<Move> next_move = alpha_beta(my_board,player_number,2,-10000000,10000000);
-        // vector<Move> next_move = minimax(my_board,player_number,3,);
-        my_board.execute_move(next_move,player_number);
-        cout << mov_string(next_move) << endl;
+        //     getline(cin,opponent_move);
+        //     vector<Move> opp_move = movlist(opponent_move);
+        //     my_board.execute_move(opp_move,-1*player_number);
+        //     x++;
+        // }
 
-        getline(cin,opponent_move);
-        vector<Move> opp_move = movlist(opponent_move);
-        my_board.execute_move(opp_move,-1*player_number);
+        while(true){
+            vector<Move> next_move = alpha_beta(my_board,player_number,2,-10000000,10000000);
+            // vector<Move> next_move = minimax(my_board,player_number,3,);
+            my_board.execute_move(next_move,player_number);
+            cout << mov_string(next_move) << endl;
+
+            getline(cin,opponent_move);
+            vector<Move> opp_move = movlist(opponent_move);
+            my_board.execute_move(opp_move,-1*player_number);
+        } 
+
+        
     }
+
+    if(n==5){
+        while(true){
+            vector<Move> next_move = alpha_beta(my_board,player_number,3,-10000000,10000000);
+            // vector<Move> next_move = minimax(my_board,player_number,3,);
+            my_board.execute_move(next_move,player_number);
+            cout << mov_string(next_move) << endl;
+
+            getline(cin,opponent_move);
+            vector<Move> opp_move = movlist(opponent_move);
+            my_board.execute_move(opp_move,-1*player_number);
+        }
     
-
+    }
     return 0;
 }
