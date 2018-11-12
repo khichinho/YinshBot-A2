@@ -7,7 +7,7 @@
 // #include <boost/foreach.hpp>
 // #include <boost/algorithm/string/classification.hpp>
 // #include <boost/algorithm/string/split.hpp>
-
+#include<ctime>
 
 // Things to do - find successor when the opponent has made consecutive 5 markers of yours
 
@@ -20,6 +20,84 @@
 
 using namespace std;
 static const std::vector<int> all_directions {1,0,-1,0,0,1,0,-1,-1,-1,1,1};
+
+int endpts5[33][4] = {{-1,4,5,4},
+{-5,-1,4,-1},
+{-4,-5,-4,1},
+{1,-4,1,5},
+{-5,-1,1,5},
+{-4,-5,5,4},
+{-2,3,5,3},
+{-5,-2,3,-2},
+{-3,-5,-3,2},
+{2,-3,2,5},
+{-5,-2,2,5},
+{-3,-5,5,3},
+{-3,2,5,2},
+{-5,-3,2,-3},
+{-2,-5,-2,3},
+{3,-2,3,5},
+{-5,-3,3,5},
+{-2,-5,5,2},
+{-4,1,5,1},
+{-5,-4,1,-4},
+{-1,-5,-1,4},
+{4,-1,4,5},
+{-5,-4,4,5},
+{-1,-5,5,1},
+{-4,0,4,0},
+{0,-4,0,4},
+{-4,-4,4,4},
+{1,5,4,5},
+{-4,-5,-1,-5},
+{-4,1,-1,4},
+{1,-4,4,-1},
+{-5,-4,-5,-1},
+{5,1,5,4},
+};
+
+int endpts6[39][4] = {{-1,5,6,5},
+{-6,-1,5,-1},
+{-5,-6,-5,1},
+{1,-5,1,6},
+{-6,-1,1,6},
+{-5,-6,6,5},
+{-2,4,6,4},
+{-6,-2,4,-2},
+{-4,-6,-4,2},
+{2,-4,2,6},
+{-6,-2,2,6},
+{-4,-6,6,4},
+{-3,3,6,3},
+{-6,-3,3,-3},
+{-3,-6,-3,3},
+{3,-3,3,6},
+{-6,-3,3,6},
+{-3,-6,6,3},
+{-4,2,6,2},
+{-6,-4,2,-4},
+{-2,-6,-2,4},
+{4,-2,4,6},
+{-6,-4,4,6},
+{-2,-6,6,2},
+{-5,1,6,1},
+{-6,-5,1,-5},
+{-1,-6,-1,5},
+{5,-1,5,6},
+{-6,-5,5,6},
+{-1,-6,6,1},
+{-5,0,5,0},
+{0,-5,0,5},
+{-5,-5,5,5},
+{1,6,5,6},
+{-5,-6,-1,-6},
+{-5,1,-1,5},
+{1,-5,5,-1},
+{-6,-5,-6,-1},
+{6,1,6,5},
+};
+
+
 
 // used to convert hex coordinate to my coordinate
 vector<int> map_hex_mysys(int hexagon, int index){
@@ -109,6 +187,31 @@ vector<int> map_mysys_hex(int abscissa, int ordinate){
 //     return str_vec; 
 // }
 
+
+int call_execute=1;
+int call_allmoves=1;
+int call_min_alpha=1;
+int call_max_alpha=1;
+int call_heuristic=1;
+int call_cons_marker=1;
+int call_startend=1;
+int call_is_marker5=1;
+
+double time_execute=0;
+double time_allmoves=0;
+double time_min_alpha=0;
+double time_max_alpha=0;
+double time_heuristic=0;
+double time_cons_marker=0;
+double time_allmoves1=0;
+double time_allmoves2=0;
+double time_allmoves3=0;
+double time_allmoves4=0;
+double time_copy=0;
+double time_end_pts=0;
+double time_startend=0;
+double time_moves_row=0;
+double time_is_marker5=0;
 
 vector<string> splitstr(string str, char dl){
     string word = "";
@@ -220,13 +323,13 @@ class Board{
         vector<vector<int> > player2_rings;
         
         Board(int n, int m, int k){     // n,m and k are board_size , initial rings and no of markers to be removed respectively
-            vector<int> element;
-            for(int i = -n; i <= n; i++)
-                element.push_back(0);
+            vector<int> element(2*n+1,0);
+            // for(int i = -n; i <= n; i++)
+            //     element.push_back(0);
             for(int i = -n; i <= n; i++)
                 board_storage.push_back(element);
             
-            element.clear();
+            // element.clear();
 
             board_size = n;
             markers_per_ring = k;
@@ -263,7 +366,7 @@ class Board{
         void print_board();
         string print_position(int x, int y);
 
-        Board copy_board();
+        // Board copy_board();
 
         vector<int> startend(int s1, int f1, int s2, int f2, int value); // returns coordinates of all the consecutive 5 or more length of same given value  
         // input as starting and ending coordinates
@@ -272,9 +375,10 @@ class Board{
         //Element as (x1,y1) and (x2,y2) is stored in vector as [x1,y1,x2,y2]  
 
         vector<int> cons_marker_old(int value);
-
+        int marker_length_one_dir (int x,int y,int xc,int yc,int value);
+        bool is_marker5(int x,int y,int value);
         int heuristic();
-
+        Board copy_board();
 
 };
 
@@ -283,6 +387,29 @@ int Board::get_ring1_removed(){
 }
 int Board::get_ring2_removed(){
     return ring2_removed;
+}
+
+Board Board::copy_board(){
+
+    clock_t t9 = clock();
+
+    Board b = Board(board_size, game_rings, markers_per_ring);
+    b.ring1 = ring1;
+    b.ring2 = ring2;
+    b.marker1 = marker1;
+    b.marker2= marker2;
+    b.ring1_removed = ring1_removed;
+    b.ring2_removed = ring2_removed;
+    b.game_rings = game_rings;
+    b.board_size = board_size;
+    b.markers_per_ring = markers_per_ring;
+    b.player1_rings = player1_rings;
+    b.player2_rings = player2_rings;
+    b.board_storage = board_storage;
+
+    clock_t t10 = clock();
+    time_copy += (double)(t10-t9)/CLOCKS_PER_SEC;
+    return(b);
 }
 
 bool Board::check_valid_position(int x, int y){
@@ -400,6 +527,8 @@ void Board::set_position(int x, int y, int value){
 
 
 vector<int> Board::startend(int x1, int y1, int x2, int y2, int value){
+    clock_t t1 = clock();
+    call_startend ++;
     vector<int> ls;
     int k = markers_per_ring;
     ls.push_back(0);
@@ -496,10 +625,15 @@ vector<int> Board::startend(int x1, int y1, int x2, int y2, int value){
             }
         }
     }
+    clock_t t2 = clock();
+    time_startend += (double)(t2-t1)/CLOCKS_PER_SEC;
+
     return ls;
 }
 
 vector<int> Board::moves_row(vector<int> ls){
+    // call_cons_marker ++;
+    clock_t t1 = clock();
     vector<int> vec;
     int k = markers_per_ring;
     if(!((ls[0] == 0) && (ls[1] == 0) && (ls[2] == 0) && (ls[3] == 0))){
@@ -516,10 +650,16 @@ vector<int> Board::moves_row(vector<int> ls){
         }
     }
     else vec.push_back(0);
+    clock_t t2 = clock();
+    time_moves_row += (double)(t2-t1)/CLOCKS_PER_SEC;
+
     return vec;
 }
 
 vector<vector<int> > end_pts(int n){
+    // call_cons_marker ++;
+    clock_t t1 = clock();
+
     vector<vector<int> > endcoord;
     
     for(int i=1;i<n;i++){
@@ -555,6 +695,9 @@ vector<vector<int> > end_pts(int n){
     endcoord.push_back(ea4);
     endcoord.push_back(ea5);
     endcoord.push_back(ea6);
+
+    clock_t t2 = clock();
+    time_end_pts += (double)(t2-t1)/CLOCKS_PER_SEC;
 
     return endcoord;
 }
@@ -635,20 +778,48 @@ vector<int> Board::cons_marker_old(int value){
 }
 
 vector<int> Board::cons_marker(int value){
-    vector<vector<int> > border_pts = end_pts(board_size);
+    call_cons_marker ++;
+    clock_t t1 = clock();
+    // vector<vector<int> > border_pts = end_pts(board_size);
     vector<int> consmark;
-    for(int i=0;i<border_pts.size();i++){
-        vector<int> vec = moves_row(startend(border_pts[i][0],border_pts[i][1],border_pts[i][2],border_pts[i][3],value));
-        if(vec.size() != 1){
-            for(int j=0;j<vec.size(); j++)
-                consmark.push_back(vec[j]);
+    // for(int i=0;i<border_pts.size();i++){
+    //     vector<int> vec = moves_row(startend(border_pts[i][0],border_pts[i][1],border_pts[i][2],border_pts[i][3],value));
+    //     if(vec.size() != 1){
+    //         for(int j=0;j<vec.size(); j++)
+    //             consmark.push_back(vec[j]);
+    //     }
+    // }
+
+    int s = board_size;
+    if(s==5){
+        for(int i=0;i<33;i++){
+            vector<int> vec = moves_row(startend(endpts5[i][0],endpts5[i][1],endpts5[i][2],endpts5[i][3],value));
+            if(vec.size() != 1){
+                for(int j=0;j<vec.size(); j++)
+                    consmark.push_back(vec[j]);
+            }
         }
     }
+    else if(s==6){
+        for(int i=0;i<39;i++){
+            vector<int> vec = moves_row(startend(endpts6[i][0],endpts6[i][1],endpts6[i][2],endpts6[i][3],value));
+            if(vec.size() != 1){
+                for(int j=0;j<vec.size(); j++)
+                    consmark.push_back(vec[j]);
+            }
+        }
+    }
+
+
     if(consmark.size() == 0)consmark.push_back(0);
+    clock_t t2 = clock();
+    time_cons_marker += (double)(t2-t1)/CLOCKS_PER_SEC;
     return consmark;
 }
 
 void Board::execute_move(vector<Move> movelist, int player_index){
+    call_execute++;
+    clock_t t1 = clock();
     for(int k = 0; k < movelist.size(); k++){
         Move m1 = movelist[k];
         vector<int> ringcoordinate;
@@ -771,17 +942,54 @@ void Board::execute_move(vector<Move> movelist, int player_index){
         }
         
     }
+    clock_t t2 = clock();
+    time_execute += (double)(t2-t1)/CLOCKS_PER_SEC;
 }
 
 
+int Board::marker_length_one_dir (int x,int y,int xc,int yc,int value){
+    int k=1;
+    int count =0;
+    while(true){
+        if(check_valid_position(x+k*xc,y+k*yc) == false)break;
+        if(get_position(x+k*xc,y+k*yc) != value)break;
+        count ++;
+        k++;
+    }
+    return count;
+}
+bool Board::is_marker5(int x,int y,int value){
+    call_is_marker5 ++;
+    clock_t t1 = clock();
+    int k=markers_per_ring;
+    if(marker_length_one_dir(x,y,0,1,value) + marker_length_one_dir(x,y,0,-1,value) >= k-1)return true;
+    if(marker_length_one_dir(x,y,1,0,value) + marker_length_one_dir(x,y,-1,0,value) >= k-1)return true;
+    if(marker_length_one_dir(x,y,1,1,value) + marker_length_one_dir(x,y,-1,-1,value) >= k-1)return true;
+
+    // for(int i=0;i<3;i++){
+    //     if(marker_length_one_dir(x,y,all_directions[4*i],all_directions[4*i+1],value)+marker_length_one_dir(x,y,all_directions[4*i+2],all_directions[4*i+3],value) >= k-1)
+    //         return true;
+    // }
+    clock_t t2 = clock();
+    time_is_marker5 += (double)(t2-t1)/CLOCKS_PER_SEC;
+    return false;
+}
+
+
+
+
 // extract all possible moves of the given player
-vector<vector<Move> > all_moves(Board bord,int player_index){
+pair<vector<vector<Move> >,vector<Board> >all_moves(Board bord,int player_index){
+    call_allmoves ++;
+    clock_t t1 = clock();
     vector<vector<Move> > possible_moves;
+    vector<Board> corresponding_boards;
     vector<vector<int> > player_rings;
-    Board b = Board(bord);
+    Board b = bord.copy_board();
     vector<int> consecutive_init = b.cons_marker(player_index);
     vector<Move> init_move;
     if(consecutive_init.size() != 1){
+        // clock_t t3 = clock();
         Move rem_ini("RS",consecutive_init[0],consecutive_init[1]);
         Move rem_end("RE",consecutive_init[2],consecutive_init[3]);
         Move rem_ring("X",b.player1_rings[0][0],b.player1_rings[0][1]);
@@ -799,9 +1007,10 @@ vector<vector<Move> > all_moves(Board bord,int player_index){
         else r = b.get_ring2_removed();
         if(r == 3){
             possible_moves.push_back(init_move);
-            return possible_moves;
+            corresponding_boards.push_back(b);
+            pair<vector<vector<Move> >,vector<Board> > successor(possible_moves,corresponding_boards);
+            return successor;
         }
-
     }
     if(player_index == -1)player_rings = b.player1_rings;
     else {
@@ -809,7 +1018,9 @@ vector<vector<Move> > all_moves(Board bord,int player_index){
     }
 
     // cout << b.player1_rings.size() << "anddfjid";
+    clock_t t3 = clock();
     for(int i=0;i<player_rings.size();i++){
+        
         int prx = player_rings[i][0];
         int pry = player_rings[i][1];
         // cout << "assds";
@@ -819,47 +1030,58 @@ vector<vector<Move> > all_moves(Board bord,int player_index){
             int k=1;
             int count=0;
             while(true){
-                
-                // cout << "values of k   " << k << "\n";
+                clock_t t7 = clock();
+                int x = prx+k*all_directions[2*j];
+                int y = pry+k*all_directions[2*j+1];
 
-                if(b.check_valid_position(prx+k*all_directions[2*j],pry+k*all_directions[2*j+1])==false)break;
+                if(b.check_valid_position(x,y)==false)break;
 
                 // cout << b.get_position(prx+k*all_directions[2*j],pry+k*all_directions[2*j+1]) << "  fksfjk \n";
 
-                if(b.get_position(prx+k*all_directions[2*j],pry+k*all_directions[2*j+1]) == -2 )break;
-                if(b.get_position(prx+k*all_directions[2*j],pry+k*all_directions[2*j+1]) == 2 )break;
+                if(b.get_position(x,y) == -2 || b.get_position(x,y) == 2)break;
+                // if(b.get_position(prx+k*all_directions[2*j],pry+k*all_directions[2*j+1]) == 2 )break;
 
-                if(b.get_position(prx+k*all_directions[2*j],pry+k*all_directions[2*j+1]) == -1){
+                if(b.get_position(x,y) == -1 || b.get_position(x,y) == 1){
                     count = 1;
                     k++;
                     // cout << "asasasasa" << endl;
                     continue;
                 }
 
-                if(b.get_position(prx+k*all_directions[2*j],pry+k*all_directions[2*j+1]) == 1){
-                    count = 1;
-                    k++;
-                    continue;
-                }
+                // if(b.get_position(prx+k*all_directions[2*j],pry+k*all_directions[2*j+1]) == 1){
+                //     count = 1;
+                //     k++;
+                //     continue;
+                // }
                 // cout << "wahtthefuk" << endl;
-                Board temp_board = Board(b);
+                Board temp_board = b.copy_board();
+                // Board temp_board = Board(b);
                 vector<Move> temp_move = init_move;
                 // vector<Move> temp_move;
                 Move m1("S", prx, pry);
-                Move m2("M", prx+k*all_directions[2*j], pry+k*all_directions[2*j+1]);
+                Move m2("M", x, y);
                 temp_move.push_back(m1);
                 temp_move.push_back(m2);
                 temp_board.execute_move(temp_move,player_index);
 
                 k++;
 
+                if(temp_board.is_marker5(prx,pry,player_index) == true){
+                    cerr << temp_board.is_marker5(prx,pry,player_index);
+
                 vector<int> all_consecutive = temp_board.cons_marker(player_index);
+                clock_t t8 = clock();
+                time_allmoves4 += (double)(t8-t7)/CLOCKS_PER_SEC;
                 if(all_consecutive.size() == 1){
                     possible_moves.push_back(temp_move);
+                    corresponding_boards.push_back(temp_board);
                 }
+                
+
                 else{
                     // cout << "aniefnkdskds   " << k << "a   " << all_consecutive.size() << "   aniefdfj    ";
                     for(int x=0;x<all_consecutive.size()/4;x++){
+                        clock_t t5 = clock();
                         Move temp_m1("RS", all_consecutive[4*x], all_consecutive[4*x+1]);
                         Move temp_m2("RE", all_consecutive[4*x+2], all_consecutive[4*x+3]);
                         vector<vector<int> > play_rings;
@@ -868,81 +1090,351 @@ vector<vector<Move> > all_moves(Board bord,int player_index){
                         for(int r=0;r<play_rings.size();r++){
                             Move temp_m3("X", play_rings[r][0], play_rings[r][1]);
                             vector<Move> temp_temp_move;
+                            Board temp_temp_board = temp_board.copy_board();
+                            // Board temp_temp_board = Board(temp_board);
                             temp_temp_move.push_back(m1);
                             temp_temp_move.push_back(m2);
                             temp_temp_move.push_back(temp_m1);
                             temp_temp_move.push_back(temp_m2);
                             temp_temp_move.push_back(temp_m3);
+                            temp_temp_board.execute_move(temp_temp_move,player_index);
                             possible_moves.push_back(temp_temp_move);
+                            corresponding_boards.push_back(temp_temp_board);
                         }
+                        clock_t t6 = clock();
+                        time_allmoves2 += (double)(t6-t5)/CLOCKS_PER_SEC;
                     }
                 }
-                if(count==1)break;    
+
+
+
+                }
+                else{possible_moves.push_back(temp_move);
+                    corresponding_boards.push_back(temp_board);}
+                if(count==1)break; 
             }
         }
     }
-    return possible_moves;
+    clock_t t4 = clock();
+    time_allmoves1 += (double)(t4-t3)/CLOCKS_PER_SEC;
+    pair<vector<vector<Move> >,vector<Board> > successor(possible_moves,corresponding_boards);
+    clock_t t2 = clock();
+    time_allmoves += (double)(t2-t1)/CLOCKS_PER_SEC;
+    return successor;
 }
 
 
-pair<vector<Move>, int> maxxx_tree(Board b,int player_index, int depth);
+pair<vector<vector<Move> >,vector<Board> >all_moves_exp(Board b,int player_index){
+    call_allmoves ++;
+    clock_t t1 = clock();
+    vector<vector<Move> > possible_moves;
+    vector<Board> corresponding_boards;
+    vector<int> consecutive_init = b.cons_marker(player_index);
+    vector<Move> init_move;
+    if(consecutive_init.size() != 1){
+        // clock_t t3 = clock();
+        Move rem_ini("RS",consecutive_init[0],consecutive_init[1]);
+        Move rem_end("RE",consecutive_init[2],consecutive_init[3]);
+        Move rem_ring("X",b.player1_rings[0][0],b.player1_rings[0][1]);
+        if(player_index == 1){
+            rem_ring.x = b.player2_rings[0][0];
+            rem_ring.y = b.player2_rings[0][1];        
+        }
+        init_move.push_back(rem_ini);
+        init_move.push_back(rem_end);
+        init_move.push_back(rem_ring);
+        b.execute_move(init_move,player_index);
 
-pair<vector<Move>, int> minnn_tree(Board b,int player_index,int depth){
-    int utility = 100010101;
-    vector<Move> movereturn;
-    if(depth == 0){
-        vector<Move> mv;
-        Move m("S",0,0);
-        mv.push_back(m);
-        pair<vector<Move> , int> reee (mv,b.heuristic());
-        return reee;
-    }
-    vector<vector<Move> > possible_moves = all_moves(b,player_index);
-    for(int i=0;i<possible_moves.size();i++){
-        Board temp_board = Board(b);
-        temp_board.execute_move(possible_moves[i],player_index);
-        if(utility > maxxx_tree(temp_board,-1*player_index,depth-1).second){
-            movereturn = possible_moves[i];
-            utility = maxxx_tree(temp_board,-1*player_index,depth-1).second;
+        int r;
+        if(player_index == -1)r = b.get_ring1_removed();
+        else r = b.get_ring2_removed();
+        if(r == 3){
+            possible_moves.push_back(init_move);
+            corresponding_boards.push_back(b);
+            pair<vector<vector<Move> >,vector<Board> > successor(possible_moves,corresponding_boards);
+            return successor;
         }
     }
-    pair<vector<Move>, int> util(movereturn,utility);
-    return util;
+    if(player_index == -1){
+
+    // cout << b.player1_rings.size() << "anddfjid";
+    clock_t t3 = clock();
+    for(int i=0;i<b.player1_rings.size();i++){
+        
+        int prx = b.player1_rings[i][0];
+        int pry = b.player1_rings[i][1];
+        // cout << "assds";
+        // cout << prx << " " << pry << endl;
+        for(int j=0;j<6;j++){
+            
+            int k=1;
+            int count=0;
+            while(true){
+                clock_t t7 = clock();
+                int x = prx+k*all_directions[2*j];
+                int y = pry+k*all_directions[2*j+1];
+
+                if(b.check_valid_position(x,y)==false)break;
+
+                // cout << b.get_position(prx+k*all_directions[2*j],pry+k*all_directions[2*j+1]) << "  fksfjk \n";
+
+                if(b.get_position(x,y) == -2 || b.get_position(x,y) == 2)break;
+                // if(b.get_position(prx+k*all_directions[2*j],pry+k*all_directions[2*j+1]) == 2 )break;
+
+                if(b.get_position(x,y) == -1 || b.get_position(x,y) == 1){
+                    count = 1;
+                    k++;
+                    // cout << "asasasasa" << endl;
+                    continue;
+                }
+
+                // if(b.get_position(prx+k*all_directions[2*j],pry+k*all_directions[2*j+1]) == 1){
+                //     count = 1;
+                //     k++;
+                //     continue;
+                // }
+                // cout << "wahtthefuk" << endl;
+                Board temp_board = b.copy_board();
+                // Board temp_board = Board(b);
+                vector<Move> temp_move = init_move;
+                // vector<Move> temp_move;
+                Move m1("S", prx, pry);
+                Move m2("M", x, y);
+                temp_move.push_back(m1);
+                temp_move.push_back(m2);
+                temp_board.execute_move(temp_move,player_index);
+
+                k++;
+
+                if(temp_board.is_marker5(prx,pry,player_index) == true){
+                    cerr << temp_board.is_marker5(prx,pry,player_index);
+
+                vector<int> all_consecutive = temp_board.cons_marker(player_index);
+                clock_t t8 = clock();
+                time_allmoves4 += (double)(t8-t7)/CLOCKS_PER_SEC;
+                if(all_consecutive.size() == 1){
+                    possible_moves.push_back(temp_move);
+                    corresponding_boards.push_back(temp_board);
+                }
+                
+
+                else{
+                    // cout << "aniefnkdskds   " << k << "a   " << all_consecutive.size() << "   aniefdfj    ";
+                    for(int x=0;x<all_consecutive.size()/4;x++){
+                        clock_t t5 = clock();
+                        Move temp_m1("RS", all_consecutive[4*x], all_consecutive[4*x+1]);
+                        Move temp_m2("RE", all_consecutive[4*x+2], all_consecutive[4*x+3]);
+                        vector<vector<int> > play_rings;
+                        if(player_index==-1)play_rings = temp_board.player1_rings;
+                        else play_rings = temp_board.player2_rings;
+                        for(int r=0;r<play_rings.size();r++){
+                            Move temp_m3("X", play_rings[r][0], play_rings[r][1]);
+                            vector<Move> temp_temp_move;
+                            Board temp_temp_board = temp_board.copy_board();
+                            // Board temp_temp_board = Board(temp_board);
+                            temp_temp_move.push_back(m1);
+                            temp_temp_move.push_back(m2);
+                            temp_temp_move.push_back(temp_m1);
+                            temp_temp_move.push_back(temp_m2);
+                            temp_temp_move.push_back(temp_m3);
+                            temp_temp_board.execute_move(temp_temp_move,player_index);
+                            possible_moves.push_back(temp_temp_move);
+                            corresponding_boards.push_back(temp_temp_board);
+                        }
+                        clock_t t6 = clock();
+                        time_allmoves2 += (double)(t6-t5)/CLOCKS_PER_SEC;
+                    }
+                }
+
+
+
+                }
+                else{possible_moves.push_back(temp_move);
+                    corresponding_boards.push_back(temp_board);}
+                if(count==1)break; 
+            }
+        }
+    }
+    clock_t t4 = clock();
+    time_allmoves1 += (double)(t4-t3)/CLOCKS_PER_SEC;
+    pair<vector<vector<Move> >,vector<Board> > successor(possible_moves,corresponding_boards);
+    clock_t t2 = clock();
+    time_allmoves += (double)(t2-t1)/CLOCKS_PER_SEC;
+    return successor;
+    }
+
+    if(player_index == 1){
+
+    // cout << b.player1_rings.size() << "anddfjid";
+    clock_t t3 = clock();
+    for(int i=0;i<b.player2_rings.size();i++){
+        
+        int prx = b.player2_rings[i][0];
+        int pry = b.player2_rings[i][1];
+        // cout << "assds";
+        // cout << prx << " " << pry << endl;
+        for(int j=0;j<6;j++){
+            
+            int k=1;
+            int count=0;
+            while(true){
+                clock_t t7 = clock();
+                int x = prx+k*all_directions[2*j];
+                int y = pry+k*all_directions[2*j+1];
+
+                if(b.check_valid_position(x,y)==false)break;
+
+                // cout << b.get_position(prx+k*all_directions[2*j],pry+k*all_directions[2*j+1]) << "  fksfjk \n";
+
+                if(b.get_position(x,y) == -2 || b.get_position(x,y) == 2)break;
+                // if(b.get_position(prx+k*all_directions[2*j],pry+k*all_directions[2*j+1]) == 2 )break;
+
+                if(b.get_position(x,y) == -1 || b.get_position(x,y) == 1){
+                    count = 1;
+                    k++;
+                    // cout << "asasasasa" << endl;
+                    continue;
+                }
+
+                // if(b.get_position(prx+k*all_directions[2*j],pry+k*all_directions[2*j+1]) == 1){
+                //     count = 1;
+                //     k++;
+                //     continue;
+                // }
+                // cout << "wahtthefuk" << endl;
+                Board temp_board = b.copy_board();
+                // Board temp_board = Board(b);
+                vector<Move> temp_move = init_move;
+                // vector<Move> temp_move;
+                Move m1("S", prx, pry);
+                Move m2("M", x, y);
+                temp_move.push_back(m1);
+                temp_move.push_back(m2);
+                temp_board.execute_move(temp_move,player_index);
+
+                k++;
+
+                if(temp_board.is_marker5(prx,pry,player_index) == true){
+                    cerr << temp_board.is_marker5(prx,pry,player_index);
+
+                vector<int> all_consecutive = temp_board.cons_marker(player_index);
+                clock_t t8 = clock();
+                time_allmoves4 += (double)(t8-t7)/CLOCKS_PER_SEC;
+                if(all_consecutive.size() == 1){
+                    possible_moves.push_back(temp_move);
+                    corresponding_boards.push_back(temp_board);
+                }
+                
+
+                else{
+                    // cout << "aniefnkdskds   " << k << "a   " << all_consecutive.size() << "   aniefdfj    ";
+                    for(int x=0;x<all_consecutive.size()/4;x++){
+                        clock_t t5 = clock();
+                        Move temp_m1("RS", all_consecutive[4*x], all_consecutive[4*x+1]);
+                        Move temp_m2("RE", all_consecutive[4*x+2], all_consecutive[4*x+3]);
+                        vector<vector<int> > play_rings;
+                        if(player_index==-1)play_rings = temp_board.player1_rings;
+                        else play_rings = temp_board.player2_rings;
+                        for(int r=0;r<play_rings.size();r++){
+                            Move temp_m3("X", play_rings[r][0], play_rings[r][1]);
+                            vector<Move> temp_temp_move;
+                            Board temp_temp_board = temp_board.copy_board();
+                            // Board temp_temp_board = Board(temp_board);
+                            temp_temp_move.push_back(m1);
+                            temp_temp_move.push_back(m2);
+                            temp_temp_move.push_back(temp_m1);
+                            temp_temp_move.push_back(temp_m2);
+                            temp_temp_move.push_back(temp_m3);
+                            temp_temp_board.execute_move(temp_temp_move,player_index);
+                            possible_moves.push_back(temp_temp_move);
+                            corresponding_boards.push_back(temp_temp_board);
+                        }
+                        clock_t t6 = clock();
+                        time_allmoves2 += (double)(t6-t5)/CLOCKS_PER_SEC;
+                    }
+                }
+
+
+
+                }
+                else{possible_moves.push_back(temp_move);
+                    corresponding_boards.push_back(temp_board);}
+                if(count==1)break; 
+            }
+        }
+    }
+    clock_t t4 = clock();
+    time_allmoves1 += (double)(t4-t3)/CLOCKS_PER_SEC;
+    pair<vector<vector<Move> >,vector<Board> > successor(possible_moves,corresponding_boards);
+    clock_t t2 = clock();
+    time_allmoves += (double)(t2-t1)/CLOCKS_PER_SEC;
+    return successor;
+    }
+
+
 }
 
-pair<vector<Move>, int> maxxx_tree(Board b,int player_index, int depth){
-    int utility = -1000000;
-    vector<Move> movereturn;
-    if(depth == 0){
-        vector<Move> mv;
-        Move m("S",0,0);
-        mv.push_back(m);
-        pair<vector<Move>, int> reee (mv,b.heuristic());
-        return reee;
-    }
+
+// pair<vector<Move>, int> maxxx_tree(Board b,int player_index, int depth);
+
+// pair<vector<Move>, int> minnn_tree(Board b,int player_index,int depth){
+//     int utility = 100010101;
+//     vector<Move> movereturn;
+//     if(depth == 0){
+//         vector<Move> mv;
+//         Move m("S",0,0);
+//         mv.push_back(m);
+//         pair<vector<Move> , int> reee (mv,b.heuristic());
+//         return reee;
+//     }
+//     vector<vector<Move> > possible_moves = all_moves(b,player_index);
+//     for(int i=0;i<possible_moves.size();i++){
+//         Board temp_board = Board(b);
+//         temp_board.execute_move(possible_moves[i],player_index);
+//         if(utility > maxxx_tree(temp_board,-1*player_index,depth-1).second){
+//             movereturn = possible_moves[i];
+//             utility = maxxx_tree(temp_board,-1*player_index,depth-1).second;
+//         }
+//     }
+//     pair<vector<Move>, int> util(movereturn,utility);
+//     return util;
+// }
+
+// pair<vector<Move>, int> maxxx_tree(Board b,int player_index, int depth){
+//     int utility = -1000000;
+//     vector<Move> movereturn;
+//     if(depth == 0){
+//         vector<Move> mv;
+//         Move m("S",0,0);
+//         mv.push_back(m);
+//         pair<vector<Move>, int> reee (mv,b.heuristic());
+//         return reee;
+//     }
     
-    vector<vector<Move> > possible_moves = all_moves(b,player_index);
-    for(int i=0;i<possible_moves.size();i++){
-        Board temp_board = Board(b);
-        temp_board.execute_move(possible_moves[i],player_index);
-        if(utility < minnn_tree(temp_board,-1*player_index,depth-1).second){
-            movereturn = possible_moves[i];
-            utility = minnn_tree(temp_board,-1*player_index,depth-1).second;
-        }
-    }
-    pair<vector<Move> ,int> util(movereturn, utility);
-    return util;
-}
+//     vector<vector<Move> > possible_moves = all_moves(b,player_index);
+//     for(int i=0;i<possible_moves.size();i++){
+//         Board temp_board = Board(b);
+//         temp_board.execute_move(possible_moves[i],player_index);
+//         if(utility < minnn_tree(temp_board,-1*player_index,depth-1).second){
+//             movereturn = possible_moves[i];
+//             utility = minnn_tree(temp_board,-1*player_index,depth-1).second;
+//         }
+//     }
+//     pair<vector<Move> ,int> util(movereturn, utility);
+//     return util;
+// }
 
-vector<Move> minimax(Board b,int player_index,int depth){
-    if(player_index == -1)return minnn_tree(b,player_index,depth).first;
-    else return maxxx_tree(b,player_index,depth).first;
-}
+// vector<Move> minimax(Board b,int player_index,int depth){
+//     if(player_index == -1)return minnn_tree(b,player_index,depth).first;
+//     else return maxxx_tree(b,player_index,depth).first;
+// }
 
 
 pair<vector<Move>, int> max_alpha(Board b,int player_index, int depth,int alpha,int beta);
 pair<vector<Move>, int> min_alpha(Board b,int player_index,int depth,int alpha,int beta){
-    int utility = 100010101;
+    call_min_alpha ++;
+    clock_t t1 = clock();
+    // int utility = 100010101;
     vector<Move> movereturn;
     if(depth == 0){
         vector<Move> mv;
@@ -951,24 +1443,34 @@ pair<vector<Move>, int> min_alpha(Board b,int player_index,int depth,int alpha,i
         pair<vector<Move> , int> reee (mv,b.heuristic());
         return reee;
     }
-    vector<vector<Move> > possible_moves = all_moves(b,player_index);
-    for(int i=0;i<possible_moves.size();i++){
-        Board temp_board = Board(b);
-        temp_board.execute_move(possible_moves[i],player_index);
-        if(utility > max_alpha(temp_board,-1*player_index,depth-1,alpha,beta).second){
-            movereturn = possible_moves[i];
-            utility = max_alpha(temp_board,-1*player_index,depth-1,alpha,beta).second;
+    pair<vector<vector<Move> >,vector<Board> > successor = all_moves(b,player_index);
+    for(int i=0;i<successor.second.size();i++){
+        Board temp_board = successor.second[i];
+        // temp_board.execute_move(possible_moves[i],player_index);
+        pair<vector<Move>, int> child = max_alpha(temp_board,-1*player_index,depth-1,alpha,beta);
+        // if(utility > max_alpha(temp_board,-1*player_index,depth-1,alpha,beta).second){
+        //     movereturn = possible_moves[i];
+        //     utility = max_alpha(temp_board,-1*player_index,depth-1,alpha,beta).second;
+        // }
+        if(beta > child.second){
+            movereturn = successor.first[i];
+            beta = child.second;
         }
-        beta = min(beta,utility);
-        pair<vector<Move>, int> util(movereturn,utility);
+        // beta = min(beta,child.second);
+        
+        pair<vector<Move>, int> util(movereturn,beta);
         if(alpha >= beta) return util;
     }
-    pair<vector<Move>, int> util(movereturn,utility);
+    pair<vector<Move>, int> util(movereturn,beta);
+    clock_t t2 = clock();
+    time_min_alpha += (double)(t2-t1)/CLOCKS_PER_SEC;
     return util;
 }
 
 pair<vector<Move>, int> max_alpha(Board b,int player_index, int depth,int alpha,int beta){
-    int utility = -1000000;
+    // int utility = -1000000;
+    call_max_alpha ++;
+    clock_t t1 = clock();
     vector<Move> movereturn;
     if(depth == 0){
         vector<Move> mv;
@@ -978,19 +1480,22 @@ pair<vector<Move>, int> max_alpha(Board b,int player_index, int depth,int alpha,
         return reee;
     }
     
-    vector<vector<Move> > possible_moves = all_moves(b,player_index);
-    for(int i=0;i<possible_moves.size();i++){
-        Board temp_board = Board(b);
-        temp_board.execute_move(possible_moves[i],player_index);
-        if(utility < min_alpha(temp_board,-1*player_index,depth-1,alpha,beta).second){
-            movereturn = possible_moves[i];
-            utility = min_alpha(temp_board,-1*player_index,depth-1,alpha,beta).second;
+    pair<vector<vector<Move> >,vector<Board> > successor = all_moves(b,player_index);
+    for(int i=0;i<successor.second.size();i++){
+        Board temp_board = successor.second[i];
+        // temp_board.execute_move(possible_moves[i],player_index);
+        pair<vector<Move>, int> child = min_alpha(temp_board,-1*player_index,depth-1,alpha,beta);
+        if(alpha < child.second){
+            movereturn = successor.first[i];
+            alpha = child.second;
         }
-        alpha = max(alpha,utility);
-        pair<vector<Move>, int> util(movereturn, utility);
+        // alpha = max(alpha,utility);
+        pair<vector<Move>, int> util(movereturn, alpha);
         if(alpha >= beta)return util;
     }
-    pair<vector<Move> ,int> util(movereturn, utility);
+    pair<vector<Move> ,int> util(movereturn, alpha);
+    clock_t t2 = clock();
+    time_max_alpha += (double)(t2-t1)/CLOCKS_PER_SEC;
     return util;
 }
 
@@ -1052,26 +1557,43 @@ vector<int> Board::marker_set(int s1,int f1, int s2, int f2, int value){
     int n = markers_per_ring;
     vector<int> marker_fet(n,0);
     if(coord.size()==1)return marker_fet;
-    for(int i=0;i<coord.size()/4;i++){
+    for(int i=0;i<coord.size();i=i+4){
         int ydiff = coord[i+3] - coord[i+1];
         int xdiff = coord[i+2] - coord[i];
         int size = max(xdiff,ydiff)+1;
-        if(size>=n-1)marker_fet[n-1] += 1;
-        else marker_fet[size] += 1;
+        if(size>=n-1)marker_fet[n-1] = marker_fet[n-1] + 1;
+        else marker_fet[size] = marker_fet[size]+1;
     }
     return marker_fet;
 }
 
 vector<int> Board::total_marker_sets(int value){
     int size = board_size;
-    vector<vector<int> > endpts = end_pts(size);
+    // vector<vector<int> > endpts = end_pts(size);
     int n = markers_per_ring;
     vector<int> marker_feat(n,0);
-    for(int i=0;i<endpts.size();i++){
-        vector<int> temp = marker_set(endpts[i][0],endpts[i][1],endpts[i][2],endpts[i][3],value);
-        for(int j=1;j<n;j++)
-            marker_feat[j] += temp[j];
+    // for(int i=0;i<endpts.size();i++){
+    //     vector<int> temp = marker_set(endpts[i][0],endpts[i][1],endpts[i][2],endpts[i][3],value);
+    //     for(int j=1;j<n;j++)
+    //         marker_feat[j] += temp[j];
+    // }
+
+    if(size == 5){
+        for(int i=0;i<33;i++){
+            vector<int> temp = marker_set(endpts5[i][0],endpts5[i][1],endpts5[i][2],endpts5[i][3],value);
+            for(int j=1;j<n;j++)
+                marker_feat[j] += temp[j];
+        }
     }
+
+    else if(size == 6){
+        for(int i=0;i<39;i++){
+            vector<int> temp = marker_set(endpts6[i][0],endpts6[i][1],endpts6[i][2],endpts6[i][3],value);
+            for(int j=1;j<n;j++)
+                marker_feat[j] += temp[j];
+        }
+    }
+
     return marker_feat;
 }
 
@@ -1079,7 +1601,7 @@ int eval(vector<int> feat){
     int n = feat.size();
     int score;
     if(n==5){
-        score = feat[1]*1+feat[2]*3+feat[3]*25+feat[4]*300;
+        score = feat[1]*1+feat[2]*3+feat[3]*25+feat[4]*1000;
     }
     if(n==6){
         score = feat[1]*1+feat[2]*3+feat[3]*25+feat[4]*300+feat[5]*4000;
@@ -1125,11 +1647,16 @@ int Board::num_moves(int player_index){
 int Board::heuristic(){
     // int score = 1000*(ring2_removed - ring1_removed);
     // score += 10*(marker2 - marker1);
+    call_heuristic++;
+    clock_t t1 = clock();
     vector<int> feature1 = total_marker_sets(-1);
     vector<int> feature2 = total_marker_sets(1);
     int score = eval(feature2) - eval(feature1);
     score += 10000*(ring2_removed - ring1_removed);
-    score += 1000*(num_moves(1) - num_moves(-1));
+    // score += 1000*(num_moves(1) - num_moves(-1));
+    
+    clock_t t2 = clock();
+    time_heuristic += (double)(t2-t1)/CLOCKS_PER_SEC;
     return score;
 }
 
@@ -1220,19 +1747,19 @@ int main(){
     
     // cout << "11";
     int x = 0;
-    while(x<10){
-        vector<Move> next_move = alpha_beta(my_board,player_number,2,-10000000,10000000);
-        // vector<Move> next_move = minimax(my_board,player_number,3);
-        my_board.execute_move(next_move,player_number);
-        cout << mov_string(next_move) << endl;
+    // while(x<10){
+    //     vector<Move> next_move = alpha_beta(my_board,player_number,3,-10000000,10000000);
+    //     // vector<Move> next_move = minimax(my_board,player_number,3);
+    //     my_board.execute_move(next_move,player_number);
+    //     cout << mov_string(next_move) << endl;
 
-        getline(cin,opponent_move);
-        vector<Move> opp_move = movlist(opponent_move);
-        my_board.execute_move(opp_move,-1*player_number);
-        x++;
-    }
+    //     getline(cin,opponent_move);
+    //     vector<Move> opp_move = movlist(opponent_move);
+    //     my_board.execute_move(opp_move,-1*player_number);
+    //     x++;
+    // }
     while(true){
-        vector<Move> next_move = alpha_beta(my_board,player_number,2,-10000000,10000000);
+        vector<Move> next_move = alpha_beta(my_board,player_number,3,-10000000,10000000);
         // vector<Move> next_move = minimax(my_board,player_number,3,);
         my_board.execute_move(next_move,player_number);
         cout << mov_string(next_move) << endl;
@@ -1241,6 +1768,34 @@ int main(){
         vector<Move> opp_move = movlist(opponent_move);
         my_board.execute_move(opp_move,-1*player_number);
 
+        cerr << "time_execute  " << time_execute << "\n";
+        cerr << "time_allmoves  " << time_allmoves << "\n";
+        cerr << "time_min_alpha  " << time_min_alpha << "\n";
+        cerr << "time_max_alpha  " << time_max_alpha << "\n";
+        cerr << "time_heuristic  " << time_heuristic << "\n";
+        cerr << "time_cons_marker  " << time_cons_marker << "\n";
+        cerr << "call_allmoves  " << call_allmoves << "\n";
+        cerr << "call_execute  " << call_execute << "\n";
+        cerr << "call_heuristic  " << call_heuristic << "\n";
+        cerr << "call_max_alpha  " << call_max_alpha << "\n";
+        cerr << "call_min_alpha  " << call_min_alpha << "\n";
+        cerr << "call_cons_marker  " << call_cons_marker << "\n";
+        cerr << "time_allmoves1  " << time_allmoves1 << "\n";
+        cerr << "time_allmoves2  " << time_allmoves2 << "\n";
+        cerr << "time_allmoves3  " << time_allmoves3 << "\n";
+        cerr << "time_allmoves4  " << time_allmoves4 << "\n";
+        cerr << "timecopy " << time_copy << "\n";
+        cerr << "time_end_pts " << time_end_pts << "\n";
+        cerr << "time_startend " << time_startend << "\n";
+        cerr << "times_moves_row " << time_moves_row << "\n";
+        cerr << "call_start_end " << call_startend << "\n";
+        cerr << "time_is_marker5  "  << time_is_marker5 << "\n";
+        cerr << "call_is_marker5 "  << call_is_marker5 << "\n";
+//         double time_end_pts=0;
+// double time_startend=0;
+// double time_moves_row=0;
     }
+    
+
     return 0;
 }
