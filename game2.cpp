@@ -474,6 +474,7 @@ Board Board::copy_board(){
     b.ring1_removed = ring1_removed;
     b.ring2_removed = ring2_removed;
     b.game_rings = game_rings;
+    b.markers_per_ring = markers_per_ring;
 
     b.player1_rings = player1_rings;
     b.player2_rings = player2_rings;
@@ -1230,7 +1231,7 @@ int main(){
 
     // ifstream infile("thefile.txt");
     // string line;
-    // Board my_board = Board(5,5,3);
+    // Board my_board = Board(5,5,5);
     // int player_number = -1;
     // my_board.print_board();
 
