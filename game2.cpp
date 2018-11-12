@@ -236,7 +236,7 @@ vector<pair<Board, vector<Move> > > Board::next_move(int player_number){
     
     if(check_for_x.size() == 1){
         vector<pair<Board, vector<Move> > > after_sm = all_moves(player_number);
-        
+
         vector<pair<Board, vector<Move> > > complete_moves;
 
         for(int i=0; i < after_sm.size(); i++){
@@ -436,10 +436,10 @@ pair<Board, vector<Move> > Board::bot_move(int player_number, int depth, int alp
         else if(player_number == 1){
             vector<pair<Board, vector<Move> > > depth_moves;
             for(int i = 0; i< calculated_moves.size(); i++){
-                pair<Board, vector<Move> > move_in_depth = calculated_moves[i].first.bot_move(1,depth-1,a,b);
+                pair<Board, vector<Move> > move_in_depth = calculated_moves[i].first.bot_move(-1,depth-1,a,b);
                 a = move_in_depth.first.heuristic();
                 depth_moves.push_back(move_in_depth);
-                if(b <= a){break;}
+                if(a <= b){break;}
             }
             for(int i = 0; i< depth_moves.size(); i++){
                 if(depth_moves[i].first.heuristic() > h){
@@ -457,11 +457,11 @@ pair<Board, vector<Move> > Board::bot_move(int player_number, int depth, int alp
 }
 
 pair<Board, vector<Move> > Board::bot_depth(int player_number, int move_number){
-    // if(move_number<=5){ return bot_move(player_number,1, -10000, 10000);}
-    // else if(move_number <= 15){ return bot_move(player_number,3, -10000, 10000);}
-    // else if(move_number <= 30){ return bot_move(player_number,4, -10000, 10000);}
-    // else{ return bot_move(player_number,3, -10000, 10000);}
-    return bot_move(player_number,3, -10000, 10000);
+    if(move_number<=5){ return bot_move(player_number,1, -10000, 10000);}
+    else if(move_number <= 20){ return bot_move(player_number,3, -10000, 10000);}
+    else if(move_number <= 45){ return bot_move(player_number,4, -10000, 10000);}
+    else{ return bot_move(player_number,5, -10000, 10000);}
+    // return bot_move(player_number,3, -10000, 10000);
 }
 
 Board Board::copy_board(){
