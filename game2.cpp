@@ -190,7 +190,7 @@ vector<pair<Board, vector<Move> > > Board::all_moves(int player_number){
                 while(check_valid_position(x2,y2)){
                     if(get_position(x2,y2) == -2*player_number || get_position(x2,y2) == 2*player_number){break;}
                     if(get_position(x2,y2) == -1*player_number || get_position(x2,y2) == player_number){over_marker = true;}
-                    else if(get_position(x2,y2) == 0 && over_marker == false && over_marker_position == false){
+                    else if(get_position(x2,y2) == 0 && over_marker_position == false){
                         Board new_board = copy_board();
                         vector<Move> new_moves;
                         new_moves.push_back(Move("S",player_rings[r][0],player_rings[r][1]));
@@ -198,9 +198,8 @@ vector<pair<Board, vector<Move> > > Board::all_moves(int player_number){
                         new_board.execute_move(new_moves,player_number);
                         pair<Board,vector<Move> > bmpair(new_board,new_moves);
                         possible_moves.push_back(bmpair);
-                        over_marker_position = true;
+                        if(over_marker == true){over_marker_position = true;}
                     }
-
                     x2 += directions[i].xchange;
                     y2 += directions[i].ychange;
                 }
@@ -458,10 +457,11 @@ pair<Board, vector<Move> > Board::bot_move(int player_number, int depth, int alp
 }
 
 pair<Board, vector<Move> > Board::bot_depth(int player_number, int move_number){
-    if(move_number<=5){ return bot_move(player_number,1, -10000, 10000);}
-    else if(move_number <= 15){ return bot_move(player_number,3, -10000, 10000);}
-    else if(move_number <= 30){ return bot_move(player_number,4, -10000, 10000);}
-    else{ return bot_move(player_number,5, -10000, 10000);}
+    // if(move_number<=5){ return bot_move(player_number,1, -10000, 10000);}
+    // else if(move_number <= 15){ return bot_move(player_number,3, -10000, 10000);}
+    // else if(move_number <= 30){ return bot_move(player_number,4, -10000, 10000);}
+    // else{ return bot_move(player_number,3, -10000, 10000);}
+    return bot_move(player_number,3, -10000, 10000);
 }
 
 Board Board::copy_board(){
@@ -1189,7 +1189,7 @@ int main(){
     
     // Board(N, M, K)
     // N=board size, M=starting rings, K=consecutive markers to remove ring.
-    Board my_board = Board(6,6,6);
+    Board my_board = Board(6,6,5);
 
     ofstream ofs;
     ofs.open("log.txt", ofstream::out | ofstream::trunc);
