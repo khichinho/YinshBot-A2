@@ -359,6 +359,8 @@ class Board{
         vector<int> marker_coordinate_feature(int s1,int f1,int s2, int f2, int value); // used to find the coordinates of end points of consecutive markers in a row
         vector<int> marker_set(int s1,int f1, int s2, int f2, int value);   // used to find the number of k-length conseutive markers in a row. k vary from 1 to markers_per_ring-1
                                                                             // nth index of vector returns the number of n length consecutive markers
+        vector<int> total_marker_sets_h(int value);
+        
         vector<int> total_marker_sets(int value);   // total number of k-set consecutive markers in the board
         
         int num_moves(int player_index);    // it returns total number of moves a player can play
@@ -961,6 +963,7 @@ int Board::marker_length_one_dir (int x,int y,int xc,int yc,int value){
 bool Board::is_marker5(int x,int y,int value){
     call_is_marker5 ++;
     clock_t t1 = clock();
+    if(get_position(x,y) != value)return false;
     int k=markers_per_ring;
     if(marker_length_one_dir(x,y,0,1,value) + marker_length_one_dir(x,y,0,-1,value) >= k-1)return true;
     if(marker_length_one_dir(x,y,1,0,value) + marker_length_one_dir(x,y,-1,0,value) >= k-1)return true;
@@ -1065,8 +1068,19 @@ pair<vector<vector<Move> >,vector<Board> >all_moves(Board bord,int player_index)
                 temp_board.execute_move(temp_move,player_index);
 
                 k++;
-
-                if(temp_board.is_marker5(prx,pry,player_index) == true){
+                bool is_exist5 = false;
+                int xchange = x-prx;
+                int ychange = y-pry;
+                int size = max(abs(xchange),abs(ychange));
+                int xcc=0;int ycc=0;
+                if(xchange != 0)xcc=xchange/abs(xchange);
+                if(ychange != 0)ycc=ychange/abs(ychange);
+                for(int l=0;l<=size;l++){
+                    is_exist5 = temp_board.is_marker5(prx+l*xcc,pry+l*ycc,player_index);
+                    if(is_exist5 == true)break;
+                }
+                // if(temp_board.is_marker5(prx,pry,player_index) == true){
+                    if(is_exist5 == true){
                     cerr << temp_board.is_marker5(prx,pry,player_index);
 
                 vector<int> all_consecutive = temp_board.cons_marker(player_index);
@@ -1597,6 +1611,22 @@ vector<int> Board::total_marker_sets(int value){
     return marker_feat;
 }
 
+vector<int> Board::total_marker_sets_h(int value){
+    int size = board_size;
+    vector<vector<int> > endpts = end_pts(size);
+    int n = markers_per_ring;
+    vector<int> marker_feat(n,0);
+    for(int i=0;i<endpts.size();i++){
+        vector<int> temp = marker_set(endpts[i][0],endpts[i][1],endpts[i][2],endpts[i][3],value);
+        for(int j=1;j<n;j++)
+            marker_feat[j] += temp[j];
+    }
+    return marker_feat;
+}
+
+
+
+
 int eval(vector<int> feat){
     int n = feat.size();
     int score;
@@ -1649,8 +1679,8 @@ int Board::heuristic(){
     // score += 10*(marker2 - marker1);
     call_heuristic++;
     clock_t t1 = clock();
-    vector<int> feature1 = total_marker_sets(-1);
-    vector<int> feature2 = total_marker_sets(1);
+    vector<int> feature1 = total_marker_sets_h(-1);
+    vector<int> feature2 = total_marker_sets_h(1);
     int score = eval(feature2) - eval(feature1);
     score += 10000*(ring2_removed - ring1_removed);
     // score += 1000*(num_moves(1) - num_moves(-1));
@@ -1759,7 +1789,7 @@ int main(){
     //     x++;
     // }
     while(true){
-        vector<Move> next_move = alpha_beta(my_board,player_number,3,-10000000,10000000);
+        vector<Move> next_move = alpha_beta(my_board,player_number,2,-10000000,10000000);
         // vector<Move> next_move = minimax(my_board,player_number,3,);
         my_board.execute_move(next_move,player_number);
         cout << mov_string(next_move) << endl;
