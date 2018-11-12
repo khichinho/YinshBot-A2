@@ -9,6 +9,84 @@
 
 using namespace std;
 
+int endpts5[33][4] = {{-1,4,5,4},
+{-5,-1,4,-1},
+{-4,-5,-4,1},
+{1,-4,1,5},
+{-5,-1,1,5},
+{-4,-5,5,4},
+{-2,3,5,3},
+{-5,-2,3,-2},
+{-3,-5,-3,2},
+{2,-3,2,5},
+{-5,-2,2,5},
+{-3,-5,5,3},
+{-3,2,5,2},
+{-5,-3,2,-3},
+{-2,-5,-2,3},
+{3,-2,3,5},
+{-5,-3,3,5},
+{-2,-5,5,2},
+{-4,1,5,1},
+{-5,-4,1,-4},
+{-1,-5,-1,4},
+{4,-1,4,5},
+{-5,-4,4,5},
+{-1,-5,5,1},
+{-4,0,4,0},
+{0,-4,0,4},
+{-4,-4,4,4},
+{1,5,4,5},
+{-4,-5,-1,-5},
+{-4,1,-1,4},
+{1,-4,4,-1},
+{-5,-4,-5,-1},
+{5,1,5,4},
+};
+
+int endpts6[39][4] = {{-1,5,6,5},
+{-6,-1,5,-1},
+{-5,-6,-5,1},
+{1,-5,1,6},
+{-6,-1,1,6},
+{-5,-6,6,5},
+{-2,4,6,4},
+{-6,-2,4,-2},
+{-4,-6,-4,2},
+{2,-4,2,6},
+{-6,-2,2,6},
+{-4,-6,6,4},
+{-3,3,6,3},
+{-6,-3,3,-3},
+{-3,-6,-3,3},
+{3,-3,3,6},
+{-6,-3,3,6},
+{-3,-6,6,3},
+{-4,2,6,2},
+{-6,-4,2,-4},
+{-2,-6,-2,4},
+{4,-2,4,6},
+{-6,-4,4,6},
+{-2,-6,6,2},
+{-5,1,6,1},
+{-6,-5,1,-5},
+{-1,-6,-1,5},
+{5,-1,5,6},
+{-6,-5,5,6},
+{-1,-6,6,1},
+{-5,0,5,0},
+{0,-5,0,5},
+{-5,-5,5,5},
+{1,6,5,6},
+{-5,-6,-1,-6},
+{-5,1,-1,5},
+{1,-5,5,-1},
+{-6,-5,-6,-1},
+{6,1,6,5},
+};
+
+
+static const std::vector<int> all_directions {1,0,-1,0,0,1,0,-1,-1,-1,1,1};
 vector<string> split_string(string str, char dl){
     string word = "";
     int num = 0;
@@ -145,6 +223,13 @@ class Board{
         int heuristic();
 
         string server_output(pair<Board, vector<Move> > server_output_move);
+
+        vector<int> marker_coordinate_feature(int s1,int f1,int s2, int f2, int value); // used to find the coordinates of end points of consecutive markers in a row
+        vector<int> marker_set(int s1,int f1, int s2, int f2, int value);   // used to find the number of k-length conseutive markers in a row. k vary from 1 to markers_per_ring-1
+        vector<int> total_marker_sets(int value);   // total number of k-set consecutive markers in the board
+        vector<int> total_marker_sets_h(int value);
+        int num_moves(int player_index);    // it returns total number of moves a player can play
+
 };
 
 string Board::server_output(pair<Board, vector<Move> > server_output_move){
@@ -311,70 +396,6 @@ vector<pair<Board, vector<Move> > > Board::next_move(int player_number){
     }
 }
 
-// ///////////////////////////Level 2
-    // pair<Board, vector<Move> > Board::bot_move(int player_number, int depth, int alpha, int beta){
-
-    //     vector<pair<Board, vector<Move> > > calculated_moves = next_move(player_number);
-
-    //     int h;
-    //     if(player_number == -1){h = 10000;}
-    //     else if(player_number == 1){h = -10000;}
-
-    //     pair<Board, vector<Move> > move_to_play;
-
-    //     if(depth == 1){
-    //         if(player_number == -1){
-    //             for(int i = 0; i< calculated_moves.size(); i++){
-    //                 if(calculated_moves[i].first.heuristic() < h){
-    //                     move_to_play.first = calculated_moves[i].first.copy_board();
-    //                     move_to_play.second = calculated_moves[i].second;
-    //                     h = calculated_moves[i].first.heuristic();
-    //                 }
-    //             }
-    //         }
-    //         else if(player_number == 1){
-    //             for(int i = 0; i< calculated_moves.size(); i++){
-    //                 if(calculated_moves[i].first.heuristic() > h){
-    //                     move_to_play.first = calculated_moves[i].first.copy_board();
-    //                     move_to_play.second = calculated_moves[i].second;
-    //                     h = calculated_moves[i].first.heuristic();
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     else if(depth > 1){
-    //         if(player_number == -1){
-    //             vector<pair<Board, vector<Move> > > depth_moves;
-    //             for(int i = 0; i< calculated_moves.size(); i++){
-    //                 pair<Board, vector<Move> > move_in_depth = calculated_moves[i].first.bot_move(-1*player_number,depth-1);
-    //                 depth_moves.push_back(move_in_depth);
-    //             }
-    //             for(int i = 0; i< depth_moves.size(); i++){
-    //                 if(depth_moves[i].first.heuristic() < h){
-    //                     move_to_play.first = calculated_moves[i].first.copy_board();
-    //                     move_to_play.second = calculated_moves[i].second;
-    //                     h = depth_moves[i].first.heuristic();
-    //                 }
-    //             }
-    //         }
-    //         else if(player_number == 1){
-    //             vector<pair<Board, vector<Move> > > depth_moves;
-    //             for(int i = 0; i< calculated_moves.size(); i++){
-    //                 pair<Board, vector<Move> > move_in_depth = calculated_moves[i].first.bot_move(-1*player_number,depth-1);
-    //                 depth_moves.push_back(move_in_depth);
-    //             }
-    //             for(int i = 0; i< depth_moves.size(); i++){
-    //                 if(depth_moves[i].first.heuristic() > h){
-    //                     move_to_play.first = calculated_moves[i].first.copy_board();
-    //                     move_to_play.second = calculated_moves[i].second;
-    //                     h = depth_moves[i].first.heuristic();
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     return move_to_play;
-    // }
-// ///////////////////////////
 pair<Board, vector<Move> > Board::bot_move(int player_number, int depth, int alpha, int beta){
 ///////////////////////////Level 3
     vector<pair<Board, vector<Move> > > calculated_moves = next_move(player_number);
@@ -457,11 +478,11 @@ pair<Board, vector<Move> > Board::bot_move(int player_number, int depth, int alp
 }
 
 pair<Board, vector<Move> > Board::bot_depth(int player_number, int move_number){
-    if(move_number<=5){ return bot_move(player_number,1, -10000, 10000);}
-    else if(move_number <= 20){ return bot_move(player_number,3, -10000, 10000);}
-    else if(move_number <= 45){ return bot_move(player_number,4, -10000, 10000);}
-    else{ return bot_move(player_number,5, -10000, 10000);}
-    // return bot_move(player_number,3, -10000, 10000);
+    // if(move_number<=5){ return bot_move(player_number,1, -10000, 10000);}
+    // else if(move_number <= 20){ return bot_move(player_number,3, -10000, 10000);}
+    // else if(move_number <= 45){ return bot_move(player_number,4, -10000, 10000);}
+    // else{ return bot_move(player_number,5, -10000, 10000);}
+    return bot_move(player_number,4, -1000000, 1000000);
 }
 
 Board Board::copy_board(){
@@ -613,11 +634,6 @@ void Board::set_position(int x, int y, int value){
     else if(init_value == -2 && value == 0)ring1--;
 }
 
-// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-// CORRECT THIS
-// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 vector<int> Board::map_hex_mysys(int hexagon, int index){
     vector<int> my_coord;
     my_coord.push_back(0);
@@ -866,6 +882,153 @@ vector<int> Board::cons_marker(int value){
     return consmark;
 }
 
+// it gives all length of given value in a row
+vector<int> Board::marker_coordinate_feature( int s1,int f1,int s2,int f2,int value){
+    vector<int> coord;
+    int x = s2-s1;
+    int y = f2-f1;
+    int diff = max(x,y);
+    int check = 0;
+    if(x != 0)x=1;
+    if(y != 0)y=1;
+    for(int i=0;i<=diff;i++){
+        int xcoord = s1+x*i;
+        int ycoord = f1+y*i;
+        
+        if(check == 0){
+            if(get_position(xcoord,ycoord) == value){
+                if(i==diff){
+                    coord.push_back(s2);
+                    coord.push_back(f2);
+                    coord.push_back(s2);
+                    coord.push_back(f2);
+                    continue;
+                }
+            
+                coord.push_back(xcoord);
+                coord.push_back(ycoord);
+                check = 1;
+                continue;
+            }
+        }
+        if(check == 1){
+            if(get_position(xcoord,ycoord) != value){
+                coord.push_back(xcoord-x);
+                coord.push_back(ycoord-y);
+                check = 0;
+                continue;
+            }
+            if(i == diff){
+                coord.push_back(s2);
+                coord.push_back(f2);
+            }
+        }
+    }
+    if(coord.size()==0)coord.push_back(0);
+    return coord;
+}
+// it gives the number of sets of 1,2,3 to board_size-1
+vector<int> Board::marker_set(int s1,int f1, int s2, int f2, int value){
+    vector<int> coord = marker_coordinate_feature(s1,f1,s2,f2,value);
+    int n = markers_per_ring;
+    vector<int> marker_fet(n,0);
+    if(coord.size()==1)return marker_fet;
+    for(int i=0;i<coord.size()/4;i++){
+        int ydiff = coord[i+3] - coord[i+1];
+        int xdiff = coord[i+2] - coord[i];
+        int size = max(xdiff,ydiff)+1;
+        if(size>=n-1)marker_fet[n-1] += 1;
+        else marker_fet[size] += 1;
+    }
+    return marker_fet;
+}
+
+vector<int> Board::total_marker_sets(int value){
+    int size = board_size;
+    vector<vector<int> > endpts = end_pts(size);
+    int n = markers_per_ring;
+    vector<int> marker_feat(n,0);
+    for(int i=0;i<endpts.size();i++){
+        vector<int> temp = marker_set(endpts[i][0],endpts[i][1],endpts[i][2],endpts[i][3],value);
+        for(int j=1;j<n;j++)
+            marker_feat[j] += temp[j];
+    }
+    return marker_feat;
+}
+
+vector<int> Board::total_marker_sets_h(int value){
+    int size = board_size;
+    vector<vector<int> > endpts = end_pts(size);
+    int n = markers_per_ring;
+    vector<int> marker_feat(n,0);
+    for(int i=0;i<endpts.size();i++){
+        vector<int> temp = marker_set(endpts[i][0],endpts[i][1],endpts[i][2],endpts[i][3],value);
+        for(int j=1;j<n;j++)
+            marker_feat[j] += temp[j];
+    }
+    return marker_feat;
+}
+
+int eval(vector<int> feat){
+    int n = feat.size();
+    int score;
+    if(n==5){
+        score = feat[1]*1+feat[2]*3+feat[3]*25+feat[4]*300;
+    }
+    if(n==6){
+        score = feat[1]*1+feat[2]*3+feat[3]*25+feat[4]*300+feat[5]*4000;
+    }
+    return score;
+}
+
+
+// include line number 24 for this function
+// this function gives the number of moves of given player
+int Board::num_moves(int player_index){
+    vector<vector<int> > player_rings;
+    if(player_index == -1)player_rings = player1_rings;
+    else player_rings = player2_rings;
+    int moves_num=0;
+    for(int i=0;i<player_rings.size();i++){
+        int prx = player_rings[i][0];
+        int pry = player_rings[i][1];
+        for(int j=0;j<6;j++){
+            // int count=0;
+            bool check = true;
+            int k=1;
+            while(true){
+                int a = prx+k*all_directions[2*j];
+                int b = pry+k*all_directions[2*j+1];
+                if(check_valid_position(a,b) == false)break;
+                if(get_position(a,b) == -2 || get_position(a,b) == 2)break;
+                if(get_position(a,b) == -1 || get_position(a,b) == 1){
+                    check = false;
+                    k++;
+                    continue;
+                }
+                moves_num++;
+                if(check == false)break;
+                k++;
+            }
+            // moves_num += count;
+        }
+    }
+    return moves_num;
+}
+
+// heuristic is like positive value when player2 has higher value
+int Board::heuristic(){
+    // int score = 1000*(ring2_removed - ring1_removed);
+    // score += 10*(marker2 - marker1);
+    clock_t t1 = clock();
+    vector<int> feature1 = total_marker_sets_h(-1);
+    vector<int> feature2 = total_marker_sets_h(1);
+    int score = eval(feature2) - eval(feature1);
+    score += 10000*(ring2_removed - ring1_removed);
+    // score += 1000*(num_moves(1) - num_moves(-1));
+    return score;
+}
+
 void Board::execute_move(vector<Move> movelist, int player_index){
     for(int k = 0; k < movelist.size(); k++){
         Move m1 = movelist[k];
@@ -1102,39 +1265,16 @@ void Board::execute_move(vector<Move> movelist, int player_index){
 
     }
 
-    int Board::heuristic(){
-        int score = board_marker(1) - board_marker(-1);
-        score += 3000*(ring2_removed - ring1_removed);
-        return score;
-    }
+    // int Board::heuristic(){
+    //     int score = board_marker(1) - board_marker(-1);
+    //     score += 3000*(ring2_removed - ring1_removed);
+    //     return score;
+    // }
 //////////////////////////////////
 
 void Board::print_board(){
 
     if(game_rings == 5){
-        cout << "   " << "     " << " " << "     " << " " << " " << endl;
-        cout << " " << "     " << " " << "     " << print_position(-1,4) << "     " << print_position(1,5) << endl;
-        cout << "   " << "     " << " " << print_position(-2,3) << "     " << print_position(0,4) << "     " << print_position(2,5) << endl;
-        cout << " " << "     " << print_position(-3,2) << "     " << print_position(-1,3) << "     " << print_position(1,4) << "     " << print_position(3,5) << endl;
-        cout << "   " << print_position(-4,1) << "     " << print_position(-2,2) << "     " << print_position(0,3) << "     " << print_position(2,4) << "     " << print_position(4,5) << endl;
-        cout << " " << "     " << print_position(-3,1) << "     " << print_position(-1,2) << "     " << print_position(1,3) << "     " << print_position(3,4) << "     " << " " << endl;
-        cout << "   " << print_position(-4,0) << "     " << print_position(-2,1) << "     " << print_position(0,2) << "     " << print_position(2,3) << "     " << print_position(4,4) << endl;
-        cout << print_position(-5,-1) << "     " << print_position(-3,0) << "     " << print_position(-1,1) << "     " << print_position(1,2) << "     " << print_position(3,3) << "     " << print_position(5,4) << endl;
-        cout << "   " << print_position(-4,-1) << "     " << print_position(-2,0) << "     " << print_position(0,1) << "     " << print_position(2,2) << "     " << print_position(4,3) << endl;
-        cout << print_position(-5,-2) << "     " << print_position(-3,-1) << "     " << print_position(-1,0) << "     " << print_position(1,1) << "     " << print_position(3,2) << "     " << print_position(5,3) << endl;
-        cout << "   " << print_position(-4,-2) << "     " << print_position(-2,-1) << "     " << print_position(0,0) << "     " << print_position(2,1) << "     " << print_position(4,2) << endl;
-        cout << print_position(-5,-3) << "     " << print_position(-3,-2) << "     " << print_position(-1,-1) << "     " << print_position(1,0) << "     " << print_position(3,1) << "     " << print_position(5,2) << endl;
-        cout << "   " << print_position(-4,-3) << "     " << print_position(-2,-2) << "     " << print_position(0,-1) << "     " << print_position(2,0) << "     " << print_position(4,1) << endl;
-        cout << print_position(-5,-4) << "     " << print_position(-3,-3) << "     " << print_position(-1,-2) << "     " << print_position(1,-1) << "     " << print_position(3,0) << "     " << print_position(5,1) << endl;
-        cout << "   " << print_position(-4,-4) << "     " << print_position(-2,-3) << "     " << print_position(0,-2) << "     " << print_position(2,-1) << "     " << print_position(4,0) << endl;
-        cout << " " << "     " << print_position(-3,-4) << "     " << print_position(-1,-3) << "     " << print_position(1,-2) << "     " << print_position(3,-1) << "     " << " " << endl;
-        cout << "   " << print_position(-4,-5) << "     " << print_position(-2,-4) << "     " << print_position(0,-3) << "     " << print_position(2,-2) << "     " << print_position(4,-1) << endl;
-        cout << " " << "     " << print_position(-3,-5) << "     " << print_position(-1,-4) << "     " << print_position(1,-3) << "     " << print_position(3,-2) << endl;
-        cout << "   " << " " << "     " << print_position(-2,-5) << "     " << print_position(0,-4) <<  "     " << print_position(2,-3) <<endl;
-        cout << " " << "     " << " " << "     " << print_position(-1,-5) << "     " << print_position(1,-4) << endl;
-        cout << "   " << "     " << " " << "     " << " " << " " << endl;
-    }
-    else if(game_rings == 6){
         cout << "   " << "     " << " " << "     " << " " << " " << endl;
         cout << " " << "     " << " " << "     " << print_position(-1,4) << "     " << print_position(1,5) << endl;
         cout << "   " << "     " << " " << print_position(-2,3) << "     " << print_position(0,4) << "     " << print_position(2,5) << endl;
@@ -1186,10 +1326,9 @@ int main(){
     int number_of_rings = stoi(game_data_vector[1]);
     int game_time = stoi(game_data_vector[2]);
 
-    
     // Board(N, M, K)
     // N=board size, M=starting rings, K=consecutive markers to remove ring.
-    Board my_board = Board(6,6,5);
+    Board my_board = Board(5,5,5);
 
     ofstream ofs;
     ofs.open("log.txt", ofstream::out | ofstream::trunc);
